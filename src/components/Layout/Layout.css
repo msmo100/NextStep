@@ -1,0 +1,143 @@
+.app-layout {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-header {
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.header-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.header-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.header-brand h1 {
+  font-family: var(--font-serif);
+  font-size: 1.625rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--color-text);
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+
+.header-byline {
+  font-family: var(--font-serif);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.header-nav {
+  display: flex;
+  gap: 1.75rem;
+}
+
+.header-nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  border-radius: 0;
+  text-decoration: none;
+  color: var(--color-text-secondary);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.header-nav a:hover {
+  background: none;
+  color: var(--color-text);
+}
+
+.header-nav a.active {
+  background: none;
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
+.header-nav-logout {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  color: var(--color-text-secondary);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-left: 0.5rem;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.header-nav-logout:hover {
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
+.app-main {
+  flex: 1;
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 4rem;
+}
+
+@media (max-width: 640px) {
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto;
+    padding: 1rem 1.25rem;
+    gap: 1rem;
+  }
+
+  .header-nav {
+    width: 100%;
+    gap: 1.25rem;
+  }
+
+  .header-nav a {
+    flex: 0;
+    justify-content: flex-start;
+    padding: 0.25rem 0;
+  }
+
+  .header-nav a span {
+    display: inline;
+  }
+
+  .app-main {
+    padding: 1.5rem 1.25rem 3rem;
+  }
+}

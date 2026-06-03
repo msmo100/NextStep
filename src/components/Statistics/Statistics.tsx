@@ -1,0 +1,436 @@
+import { useMemo, useState, useEffect } from 'react';
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Filler,
+} from 'chart.js';
+import { Doughnut, Bar, Line } from 'react-chartjs-2';
+import type { JobApplication, ApplicationStatus } from '../../types';
+import { ALL_STATUSES, STATUS_LABELS, STATUS_COLORS } from '../../types';
+import { FileBarChart, Download, Target, TrendingUp, Clock, Percent } from 'lucide-react';
+import { loadWeeklyGoal, saveWeeklyGoal } from '../../services/storage';
+import { exportToCsv, exportToPdf, exportArbetsformedlingenReport } from '../../services/exportData';
+import './Statistics.css';
+
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  PointElement,
+  LineElement,
+  Filler
+);
+
+interface StatisticsProps {
+  applications: JobApplication[];
+}
+
+function toLocalDateString(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+export function Statistics({ applications }: StatisticsProps) {
+  const [weeklyGoal, setWeeklyGoal] = useState(10);
+  const [editingGoal, setEditingGoal] = useState(false);
+
+  const [afFromDate, setAfFromDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    return toLocalDateString(d);
+  });
+  const [afToDate, setAfToDate] = useState(() => toLocalDateString(new Date()));
+
+  useEffect(() => {
+    setWeeklyGoal(loadWeeklyGoal());
+  }, []);
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    ALL_STATUSES.forEach((s) => (counts[s] = 0));
+    applications.forEach((app) => {
+      counts[app.status] = (counts[app.status] || 0) + 1;
+    });
+    return counts;
+  }, [applications]);
+
+  const topCompanies = useMemo(() => {
+    const counts: Record<string, number> = {};
+    applications.forEach((app) => {
+      counts[app.company] = (counts[app.company] || 0) + 1;
+    });
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8);
+  }, [applications]);
+
+  const timelineData = useMemo(() => {
+    const byWeek: Record<string, number> = {};
+    applications.forEach((app) => {
+      const date = new Date(app.applicationDate);
+      const weekStart = new Date(date);
+      weekStart.setDate(date.getDate() - date.getDay() + 1);
+      const key = weekStart.toISOString().split('T')[0];
+      byWeek[key] = (byWeek[key] || 0) + 1;
+    });
+    const sorted = Object.entries(byWeek).sort((a, b) => a[0].localeCompare(b[0]));
+    return {
+      labels: sorted.map(([date]) => new Date(date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })),
+      values: sorted.map(([, count]) => count),
+    };
+  }, [applications]);
+
+  // Response rate: % of applications that moved beyond "applied"
+  const responseRate = useMemo(() => {
+    const applied = applications.filter(
+      (a) => a.status !== 'to-apply'
+    );
+    if (applied.length === 0) return null;
+    const progressed = applied.filter(
+      (a) => a.status === 'interview' || a.status === 'offer'
+    );
+    return Math.round((progressed.length / applied.length) * 100);
+  }, [applications]);
+
+  // Average time per stage (in days)
+  const avgTimePerStage = useMemo(() => {
+    const durations: Record<ApplicationStatus, number[]> = {
+      'to-apply': [],
+      applied: [],
+      interview: [],
+      rejected: [],
+      offer: [],
+    };
+
+    for (const app of applications) {
+      const history = app.statusHistory || [];
+      if (history.length === 0) continue;
+
+      // Time from creation to first status change
+      let prevTime = new Date(app.createdAt).getTime();
+      let prevStatus = history[0].from;
+
+      for (const change of history) {
+        const changeTime = new Date(change.timestamp).getTime();
+        const days = (changeTime - prevTime) / (1000 * 60 * 60 * 24);
+        if (days >= 0) {
+          durations[prevStatus].push(days);
+        }
+        prevTime = changeTime;
+        prevStatus = change.to;
+      }
+    }
+
+    const result: Partial<Record<ApplicationStatus, number>> = {};
+    for (const status of ALL_STATUSES) {
+      const vals = durations[status];
+      if (vals.length > 0) {
+        result[status] = Math.round((vals.reduce((a, b) => a + b, 0) / vals.length) * 10) / 10;
+      }
+    }
+    return result;
+  }, [applications]);
+
+  // Weekly goal progress
+  const weeklyProgress = useMemo(() => {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() + mondayOffset);
+    weekStart.setHours(0, 0, 0, 0);
+
+    const thisWeek = applications.filter((app) => {
+      const appDate = new Date(app.applicationDate);
+      return appDate >= weekStart && app.status !== 'to-apply';
+    });
+
+    return thisWeek.length;
+  }, [applications]);
+
+  const handleGoalChange = (newGoal: number) => {
+    const clamped = Math.max(1, Math.min(100, newGoal));
+    setWeeklyGoal(clamped);
+    saveWeeklyGoal(clamped);
+    setEditingGoal(false);
+  };
+
+  const goalPercent = Math.min(100, Math.round((weeklyProgress / weeklyGoal) * 100));
+
+  const doughnutData = {
+    labels: ALL_STATUSES.map((s) => STATUS_LABELS[s]),
+    datasets: [
+      {
+        data: ALL_STATUSES.map((s) => statusCounts[s]),
+        backgroundColor: ALL_STATUSES.map((s) => STATUS_COLORS[s]),
+        borderWidth: 0,
+        hoverOffset: 4,
+      },
+    ],
+  };
+
+  const barData = {
+    labels: topCompanies.map(([name]) => name),
+    datasets: [
+      {
+        label: 'Ansökningar',
+        data: topCompanies.map(([, count]) => count),
+        backgroundColor: 'rgba(26, 26, 26, 0.85)',
+        borderRadius: 0,
+      },
+    ],
+  };
+
+  const lineData = {
+    labels: timelineData.labels,
+    datasets: [
+      {
+        label: 'Ansökningar per vecka',
+        data: timelineData.values,
+        borderColor: '#1a1a1a',
+        backgroundColor: 'rgba(26, 26, 26, 0.06)',
+        fill: true,
+        tension: 0,
+        pointBackgroundColor: '#1a1a1a',
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+    },
+  };
+
+  if (applications.length === 0) {
+    return (
+      <div className="stats-empty">
+        <FileBarChart size={48} strokeWidth={1.5} />
+        <h3>Ingen statistik ännu</h3>
+        <p>Lägg till ansökningar för att se din statistik här.</p>
+      </div>
+    );
+  }
+
+  const hasTimeData = Object.keys(avgTimePerStage).length > 0;
+
+  return (
+    <div className="statistics">
+      <div className="stats-summary">
+        {ALL_STATUSES.map((status) => (
+          <div key={status} className="stat-card">
+            <div className="stat-dot" style={{ backgroundColor: STATUS_COLORS[status] }} />
+            <div>
+              <span className="stat-value">{statusCounts[status]}</span>
+              <span className="stat-label">{STATUS_LABELS[status]}</span>
+            </div>
+          </div>
+        ))}
+        <div className="stat-card stat-card-total">
+          <div>
+            <span className="stat-value">{applications.length}</span>
+            <span className="stat-label">Totalt</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="insights-row">
+        <div className="insight-card">
+          <div className="insight-header">
+            <Percent size={18} />
+            <h3>Svarsfrekvens</h3>
+          </div>
+          {responseRate !== null ? (
+            <>
+              <span className="insight-value">{responseRate}%</span>
+              <p className="insight-desc">
+                av ansökningar har fått svar (intervju eller erbjudande)
+              </p>
+            </>
+          ) : (
+            <p className="insight-desc">Skicka ansökningar för att se din svarsfrekvens.</p>
+          )}
+        </div>
+
+        <div className="insight-card">
+          <div className="insight-header">
+            <Target size={18} />
+            <h3>Veckomål</h3>
+            <button
+              className="insight-edit-btn"
+              onClick={() => setEditingGoal(true)}
+              title="Ändra mål"
+            >
+              Ändra
+            </button>
+          </div>
+          <div className="weekly-goal">
+            <div className="goal-numbers">
+              <span className="insight-value">{weeklyProgress}</span>
+              <span className="goal-separator">/</span>
+              {editingGoal ? (
+                <input
+                  type="number"
+                  className="goal-input"
+                  defaultValue={weeklyGoal}
+                  min={1}
+                  max={100}
+                  autoFocus
+                  onBlur={(e) => handleGoalChange(Number(e.target.value))}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleGoalChange(Number((e.target as HTMLInputElement).value));
+                    if (e.key === 'Escape') setEditingGoal(false);
+                  }}
+                />
+              ) : (
+                <span className="goal-target">{weeklyGoal}</span>
+              )}
+            </div>
+            <div className="progress-bar">
+              <div
+                className={`progress-fill ${goalPercent >= 100 ? 'progress-complete' : ''}`}
+                style={{ width: `${goalPercent}%` }}
+              />
+            </div>
+            <p className="insight-desc">
+              {goalPercent >= 100
+                ? 'Veckomålet uppnått!'
+                : `${weeklyGoal - weeklyProgress} ansökningar kvar denna vecka`}
+            </p>
+          </div>
+        </div>
+
+        <div className="insight-card">
+          <div className="insight-header">
+            <Clock size={18} />
+            <h3>Snittid per steg</h3>
+          </div>
+          {hasTimeData ? (
+            <div className="time-stages">
+              {ALL_STATUSES.filter((s) => avgTimePerStage[s] !== undefined).map((status) => (
+                <div key={status} className="time-stage-row">
+                  <div className="time-stage-label">
+                    <span className="stat-dot" style={{ backgroundColor: STATUS_COLORS[status] }} />
+                    <span>{STATUS_LABELS[status]}</span>
+                  </div>
+                  <span className="time-stage-value">
+                    {avgTimePerStage[status]! < 1
+                      ? `${Math.round(avgTimePerStage[status]! * 24)}h`
+                      : `${avgTimePerStage[status]} d`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="insight-desc">
+              Flytta ansökningar mellan steg för att se snittider.
+            </p>
+          )}
+        </div>
+      </div>
+
+      <div className="export-row">
+        <div className="export-card">
+          <div className="export-info">
+            <Download size={18} />
+            <div>
+              <h3>Exportera data</h3>
+              <p>Ladda ner dina ansökningar som CSV eller skriv ut som PDF.</p>
+            </div>
+          </div>
+          <div className="export-actions">
+            <button className="btn btn-secondary btn-sm" onClick={() => exportToCsv(applications)}>
+              <TrendingUp size={14} /> CSV
+            </button>
+            <button className="btn btn-secondary btn-sm" onClick={() => exportToPdf(applications)}>
+              <FileBarChart size={14} /> PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="export-row">
+        <div className="export-card export-card-af">
+          <div className="export-info">
+            <FileBarChart size={18} />
+            <div>
+              <h3>Aktivitetsrapport till Arbetsförmedlingen</h3>
+              <p>Lista över sökta jobb mellan valda datum.</p>
+            </div>
+          </div>
+          <div className="af-controls">
+            <div className="af-date-group">
+              <label htmlFor="af-from">Från</label>
+              <input
+                id="af-from"
+                type="date"
+                className="af-date-input"
+                value={afFromDate}
+                max={afToDate}
+                onChange={(e) => setAfFromDate(e.target.value)}
+              />
+            </div>
+            <div className="af-date-group">
+              <label htmlFor="af-to">Till</label>
+              <input
+                id="af-to"
+                type="date"
+                className="af-date-input"
+                value={afToDate}
+                min={afFromDate}
+                onChange={(e) => setAfToDate(e.target.value)}
+              />
+            </div>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={() => exportArbetsformedlingenReport(applications, afFromDate, afToDate)}
+            >
+              Skapa rapport
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="stats-charts">
+        <div className="chart-card">
+          <h3>Status fördelning</h3>
+          <div className="chart-container chart-doughnut">
+            <Doughnut data={doughnutData} options={{ ...chartOptions, plugins: { legend: { display: true, position: 'bottom' as const } } }} />
+          </div>
+        </div>
+
+        {topCompanies.length > 0 && (
+          <div className="chart-card">
+            <h3>Topp företag</h3>
+            <div className="chart-container">
+              <Bar data={barData} options={{ ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} />
+            </div>
+          </div>
+        )}
+
+        {timelineData.labels.length > 1 && (
+          <div className="chart-card chart-card-wide">
+            <h3>Ansökningar över tid</h3>
+            <div className="chart-container">
+              <Line data={lineData} options={{ ...chartOptions, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }} />
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
