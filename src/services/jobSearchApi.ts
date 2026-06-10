@@ -1,7 +1,9 @@
 import type { JobSearchResponse, JobSearchFilters } from '../types';
 
+// Adressen till Arbetsförmedlingens öppna jobbsöks-API (JobTech).
 const BASE_URL = 'https://jobsearch.api.jobtechdev.se';
 
+// Söker jobb mot API:et. offset/limit används för sidindelning.
 export async function searchJobs(
   query: string,
   filters: JobSearchFilters = {},
@@ -9,29 +11,35 @@ export async function searchJobs(
   limit = 20
 ): Promise<JobSearchResponse> {
 
+  // Grundparametrar: var i listan vi börjar, hur många, sortering på publiceringsdatum.
   const params = new URLSearchParams({
     offset: String(offset),
     limit: String(limit),
     sort: 'pubdate-desc',
   });
 
+  // Lägg bara till sökord och filter som faktiskt är ifyllda.
   if (query.trim()) params.set('q', query.trim());
   if (filters.region) params.set('region', filters.region);
   if (filters.occupationField) params.set('occupation-field', filters.occupationField);
   if (filters.employmentType) params.set('employment-type', filters.employmentType);
   if (filters.remote) params.set('remote', 'true');
 
+  // Skicka förfrågan till API:et.
   const response = await fetch(`${BASE_URL}/search?${params}`, {
     headers: { accept: 'application/json' },
   });
 
+  // Kasta ett fel om servern svarade med en felkod (t.ex. 500).
   if (!response.ok) {
     throw new Error(`API-fel: ${response.status}`);
   }
 
+  // Tolka svaret som JSON och returnera det.
   return response.json();
 }
 
+// Hämtar en enskild annons via dess id.
 export async function getJobById(id: string) {
   const response = await fetch(`${BASE_URL}/ad/${id}`, {
     headers: { accept: 'application/json' },

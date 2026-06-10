@@ -9,6 +9,8 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useApplications } from './hooks/useApplications';
 import './App.css';
 
+// Skyddar sidor som kräver inloggning: visar laddning, skickar utloggade till /login,
+// och annars sidans innehåll.
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="app-loading">Laddar…</div>;
@@ -16,6 +18,7 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+// Inloggningssidan: redan inloggade skickas vidare till startsidan i stället.
 function LoginRoute() {
   const { user, loading } = useAuth();
   if (loading) return <div className="app-loading">Laddar…</div>;
@@ -23,7 +26,9 @@ function LoginRoute() {
   return <Login />;
 }
 
+// Själva appinnehållet: hämtar ansökningsdatan och definierar alla sidor (routes).
 function AppContent() {
+  // Hämtar ansökningarna och alla funktioner för att ändra dem från en gemensam hook.
   const {
     applications,
     addApplication,
@@ -33,6 +38,8 @@ function AppContent() {
     getApplicationsByStatus,
   } = useApplications();
 
+  // Bygger en mängd av redan sparade annons-id:n så jobbsöket kan visa "Sparad".
+  // useMemo räknar bara om detta när listan med ansökningar ändras.
   const savedJobIds = useMemo(
     () => new Set(applications.filter((a) => a.sourceId).map((a) => a.sourceId!)),
     [applications]
@@ -79,6 +86,7 @@ function AppContent() {
   );
 }
 
+// Rot-komponenten: slår in allt i routern (URL-hantering) och inloggningskontexten.
 function App() {
   return (
     <BrowserRouter>

@@ -8,8 +8,11 @@ import {
   deleteApplicationRow,
 } from '../services/applicationsApi';
 
+// Egen hook som samlar all logik kring ansökningar: hämta, lägg till, ändra, ta bort,
+// flytta, filtrera och sortera. Synkar mot databasen via applicationsApi.
 export function useApplications() {
   const { user } = useAuth();
+  // applications = listan i minnet, loading = om vi just nu hämtar, filter = aktuellt filter.
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterState>({
@@ -20,6 +23,7 @@ export function useApplications() {
     sortDirection: 'desc',
   });
 
+  // Hämtar om ansökningarna från databasen. Tom lista om ingen är inloggad.
   const reload = useCallback(async () => {
     if (!user) {
       setApplications([]);
@@ -36,11 +40,13 @@ export function useApplications() {
     }
   }, [user]);
 
+  // Ladda datan vid start och varje gång användaren byts (in-/utloggning).
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     reload();
   }, [reload]);
 
+  // Lägger till en ny ansökan: sparar i databasen och lägger den sist i listan.
   const addApplication = useCallback(
     async (app: Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>) => {
       if (!user) return;
@@ -58,11 +64,13 @@ export function useApplications() {
     [user]
   );
 
+  // Uppdaterar en ansökan. Om statusen ändras loggas bytet i statusHistory.
   const updateApplication = useCallback(
     async (id: string, updates: Partial<JobApplication>) => {
       const existing = applications.find((a) => a.id === id);
       if (!existing) return;
 
+      // Bygg ny historik och lägg till en post om statusen faktiskt ändrades.
       const statusHistory = [...existing.statusHistory];
       if (updates.status && updates.status !== existing.status) {
         statusHistory.push({
@@ -73,10 +81,12 @@ export function useApplications() {
       }
       const merged = { ...existing, ...updates, statusHistory };
 
+      // Uppdatera direkt i gränssnittet (optimistiskt), spara sedan i databasen.
       setApplications((prev) => prev.map((a) => (a.id === id ? merged : a)));
       try {
         await updateApplicationRow(id, { ...updates, statusHistory });
       } catch (err) {
+        // Vid fel: ladda om från databasen så att vyn inte visar fel data.
         console.error('Kunde inte uppdatera ansökan:', err);
         reload();
       }
@@ -84,6 +94,7 @@ export function useApplications() {
     [applications, reload]
   );
 
+  // Tar bort en ansökan. Tas bort direkt i vyn och läggs tillbaka om databasen klagar.
   const deleteApplication = useCallback(
     async (id: string) => {
       const prev = applications;
@@ -98,14 +109,17 @@ export function useApplications() {
     [applications]
   );
 
+  // Flyttar en ansökan till en ny status (används vid dra-och-släpp i kanban).
   const moveApplication = useCallback(
     (id: string, newStatus: ApplicationStatus) => updateApplication(id, { status: newStatus }),
     [updateApplication]
   );
 
+  // Returnerar listan filtrerad (status/företag/tagg) och sorterad enligt filter-tillståndet.
   const getFilteredApplications = useCallback(() => {
     let filtered = [...applications];
 
+    // Filtrera bort allt som inte matchar valda status, företag respektive tagg.
     if (filter.status !== 'all') {
       filtered = filtered.filter((app) => app.status === filter.status);
     }
@@ -120,23 +134,27 @@ export function useApplications() {
       );
     }
 
+    // Sorteringsfunktioner per alternativ (datum nyast först, titel/företag alfabetiskt).
     const sortFns: Record<SortOption, (a: JobApplication, b: JobApplication) => number> = {
       date: (a, b) => new Date(b.applicationDate).getTime() - new Date(a.applicationDate).getTime(),
       title: (a, b) => a.jobTitle.localeCompare(b.jobTitle, 'sv'),
       company: (a, b) => a.company.localeCompare(b.company, 'sv'),
     };
 
+    // Sortera och vänd vid stigande ordning (standard är fallande).
     filtered.sort(sortFns[filter.sortBy]);
     if (filter.sortDirection === 'asc') filtered.reverse();
 
     return filtered;
   }, [applications, filter]);
 
+  // Plockar ut alla ansökningar med en viss status (används för att fylla kanban-kolumnerna).
   const getApplicationsByStatus = useCallback(
     (status: ApplicationStatus) => applications.filter((app) => app.status === status),
     [applications]
   );
 
+  // Allt som komponenterna får använda från hooken.
   return {
     applications,
     loading,

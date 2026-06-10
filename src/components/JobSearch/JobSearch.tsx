@@ -33,19 +33,23 @@ import type {
 } from '../../types';
 import './JobSearch.css';
 
+// Props: callback för att spara en annons som ansökan + mängd av redan sparade annons-id:n.
 interface JobSearchProps {
   onSaveJob: (app: Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>) => void;
   savedJobIds: Set<string>;
 }
 
+// Återanvänt tomt filterobjekt (startläge).
 const EMPTY_FILTERS: JobSearchFilters = {};
 
+// Sant om minst ett filter är valt.
 function hasAnyFilter(filters: JobSearchFilters): boolean {
   return Boolean(
     filters.region || filters.occupationField || filters.employmentType || filters.remote
   );
 }
 
+// Bygger ett läsbart standardnamn för en sökning utifrån sökord och valda filter.
 function describeSearch(query: string, filters: JobSearchFilters): string {
   const parts = [
     query.trim(),
@@ -57,7 +61,9 @@ function describeSearch(query: string, filters: JobSearchFilters): string {
   return parts.join(' · ') || 'Namnlös sökning';
 }
 
+// Sidan för att söka jobb mot API:et, spara sökningar och spara annonser som ansökningar.
 export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
+  // Sök-tillstånd: sökord, filter, resultat, totalt antal, sidoffset, laddning, fel, m.m.
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<JobSearchFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<JobSearchResult[]>([]);
@@ -68,12 +74,15 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
+  // Tillstånd kopplat till sparade sökningar.
   const { user } = useAuth();
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savingName, setSavingName] = useState<string | null>(null);
 
+  // Antal träffar per sida.
   const limit = 20;
 
+  // Hämta användarens sparade sökningar vid start (och töm dem vid utloggning).
   useEffect(() => {
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -85,6 +94,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
       .catch((err) => console.error('Kunde inte hämta sparade sökningar:', err));
   }, [user]);
 
+  // Kör en sökning mot API:et och uppdaterar resultat-tillståndet. Avbryter om allt är tomt.
   const doSearch = useCallback(
     async (searchQuery: string, searchFilters: JobSearchFilters, searchOffset: number) => {
       if (!searchQuery.trim() && !hasAnyFilter(searchFilters)) return;
@@ -110,11 +120,13 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     []
   );
 
+  // När sökformuläret skickas: kör en ny sökning från första sidan.
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     doSearch(query, filters, 0);
   };
 
+  // Sätter eller rensar ett enskilt filter (tomt värde tar bort nyckeln).
   const updateFilter = <K extends keyof JobSearchFilters>(
     key: K,
     value: JobSearchFilters[K]
@@ -127,12 +139,15 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     });
   };
 
+  // Sökknappen är aktiv bara om det finns ett sökord eller minst ett filter.
   const canSearch = query.trim().length > 0 || hasAnyFilter(filters);
 
+  // Börja spara: föreslå ett namn baserat på den aktuella sökningen.
   const handleStartSave = () => {
     setSavingName(describeSearch(query, filters));
   };
 
+  // Bekräfta sparandet: spara sökningen i databasen och lägg den först i listan.
   const handleConfirmSave = async () => {
     const name = (savingName ?? '').trim();
     if (!name || !user) return;
@@ -145,6 +160,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     }
   };
 
+  // Kör en sparad sökning: återställ sökord/filter och sök på nytt.
   const handleRunSaved = (search: SavedSearch) => {
     setQuery(search.query);
     setFilters(search.filters);
@@ -152,6 +168,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     doSearch(search.query, search.filters, 0);
   };
 
+  // Ta bort en sparad sökning (optimistiskt – läggs tillbaka om databasen klagar).
   const handleDeleteSaved = async (id: string) => {
     const prev = savedSearches;
     setSavedSearches((p) => p.filter((s) => s.id !== id));
@@ -163,10 +180,12 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     }
   };
 
+  // Sparar en annons som en ny ansökan i kolumnen "Att söka".
   const handleSave = (job: JobSearchResult) => {
     onSaveJob({
       jobTitle: job.headline,
       company: job.employer.name,
+      // Välj den mest specifika platsen som finns (stad → kommun → region).
       location:
         job.workplace_address?.city ||
         job.workplace_address?.municipality ||
@@ -182,6 +201,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     });
   };
 
+  // Räkna ut antal sidor och vilken sida vi är på (för pagineringen).
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 

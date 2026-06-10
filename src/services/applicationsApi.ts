@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { JobApplication } from '../types';
 
+// Hur en rad ser ut i databastabellen "applications" (snake_case, kan vara null).
 interface ApplicationRow {
   id: string;
   user_id: string;
@@ -18,6 +19,8 @@ interface ApplicationRow {
   updated_at: string;
 }
 
+// Översätter en databasrad till appens JobApplication-format (snake_case → camelCase,
+// och null görs om till tomma värden).
 function rowToApp(row: ApplicationRow): JobApplication {
   return {
     id: row.id,
@@ -36,6 +39,8 @@ function rowToApp(row: ApplicationRow): JobApplication {
   };
 }
 
+// Motsatsen till rowToApp: bygger ett objekt med databaskolumner från ett (del-)JobApplication.
+// Bara fält som faktiskt skickats med tas med, så att en uppdatering inte nollställer resten.
 function appToColumns(
   app: Partial<Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>>
 ): Record<string, unknown> {
@@ -53,6 +58,8 @@ function appToColumns(
   return cols;
 }
 
+// Hämtar alla ansökningar för den inloggade användaren, äldst först.
+// (Vilken användare som ses styrs av databasens säkerhetsregler.)
 export async function fetchApplications(): Promise<JobApplication[]> {
   const { data, error } = await supabase
     .from('applications')
@@ -62,6 +69,7 @@ export async function fetchApplications(): Promise<JobApplication[]> {
   return (data as ApplicationRow[]).map(rowToApp);
 }
 
+// Sparar en ny ansökan kopplad till användaren och returnerar den skapade raden.
 export async function insertApplication(
   userId: string,
   app: Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>
@@ -75,6 +83,7 @@ export async function insertApplication(
   return rowToApp(data as ApplicationRow);
 }
 
+// Uppdaterar en befintlig ansökan och sätter updated_at till nu.
 export async function updateApplicationRow(
   id: string,
   updates: Partial<Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>>
@@ -89,6 +98,7 @@ export async function updateApplicationRow(
   return rowToApp(data as ApplicationRow);
 }
 
+// Tar bort raden med angivet id.
 export async function deleteApplicationRow(id: string): Promise<void> {
   const { error } = await supabase.from('applications').delete().eq('id', id);
   if (error) throw error;

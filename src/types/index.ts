@@ -1,3 +1,4 @@
+// De fem möjliga lägena en ansökan kan befinna sig i (motsvarar kanban-kolumnerna).
 export type ApplicationStatus =
   | 'to-apply'
   | 'applied'
@@ -5,6 +6,7 @@ export type ApplicationStatus =
   | 'rejected'
   | 'offer';
 
+// Svenska visningsnamn för varje status (används i gränssnittet).
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   'to-apply': 'Att söka',
   applied: 'Ansökt',
@@ -13,6 +15,7 @@ export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   offer: 'Erbjudande',
 };
 
+// Färgkod för varje status (prickar, kolumnkanter, diagram).
 export const STATUS_COLORS: Record<ApplicationStatus, string> = {
   'to-apply': '#6366f1',
   applied: '#ec4899',
@@ -21,6 +24,7 @@ export const STATUS_COLORS: Record<ApplicationStatus, string> = {
   offer: '#22c55e',
 };
 
+// Statusarna i visningsordning – används för att loopa över alla kolumner.
 export const ALL_STATUSES: ApplicationStatus[] = [
   'to-apply',
   'applied',
@@ -29,12 +33,14 @@ export const ALL_STATUSES: ApplicationStatus[] = [
   'offer',
 ];
 
+// En enskild statusförflyttning, sparas i historiken för att kunna mäta tider.
 export interface StatusChange {
   from: ApplicationStatus;
   to: ApplicationStatus;
   timestamp: string;
 }
 
+// En jobbansökan – appens centrala datamodell.
 export interface JobApplication {
   id: string;
   jobTitle: string;
@@ -51,6 +57,7 @@ export interface JobApplication {
   updatedAt: string;
 }
 
+// En träff från Arbetsförmedlingens jobbsöks-API (rådata, snake_case som API:et).
 export interface JobSearchResult {
   id: string;
   headline: string;
@@ -82,6 +89,7 @@ export interface JobSearchResult {
   };
 }
 
+// Svaret från sök-API:et: totalt antal träffar + själva träffarna.
 export interface JobSearchResponse {
   total: {
     value: number;
@@ -89,6 +97,7 @@ export interface JobSearchResponse {
   hits: JobSearchResult[];
 }
 
+// Valbara filter för en jobbsökning.
 export interface JobSearchFilters {
   region?: string;
   occupationField?: string;
@@ -96,6 +105,7 @@ export interface JobSearchFilters {
   remote?: boolean;
 }
 
+// En sparad sökning (sökord + filter) som användaren kan köra igen.
 export interface SavedSearch {
   id: string;
   name: string;
@@ -104,9 +114,11 @@ export interface SavedSearch {
   createdAt: string;
 }
 
+// Alternativ för sortering av ansökningslistan.
 export type SortOption = 'date' | 'title' | 'company';
 export type SortDirection = 'asc' | 'desc';
 
+// Det aktuella filter-/sorteringstillståndet för listan.
 export interface FilterState {
   status: ApplicationStatus | 'all';
   company: string;

@@ -4,6 +4,7 @@ import type { JobApplication, ApplicationStatus } from '../../types';
 import { STATUS_LABELS, ALL_STATUSES } from '../../types';
 import './Kanban.css';
 
+// Props: ev. ansökan att redigera, förvald status, samt spara-/stäng-callbacks.
 interface ApplicationModalProps {
   application?: JobApplication | null;
   defaultStatus?: ApplicationStatus;
@@ -11,7 +12,9 @@ interface ApplicationModalProps {
   onClose: () => void;
 }
 
+// Modalfönstret med formuläret för att skapa eller redigera en ansökan.
 export function ApplicationModal({ application, defaultStatus = 'to-apply', onSave, onClose }: ApplicationModalProps) {
+  // Ett tillstånd per formulärfält. Datumet förifylls med dagens datum.
   const [jobTitle, setJobTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
@@ -21,6 +24,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
   const [tagsInput, setTagsInput] = useState('');
   const [url, setUrl] = useState('');
 
+  // Vid redigering: fyll formuläret med den befintliga ansökans värden.
   useEffect(() => {
     if (application) {
       setJobTitle(application.jobTitle);
@@ -34,6 +38,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
     }
   }, [application]);
 
+  // Skickar formuläret: bygger ihop ansökningsobjektet och stänger sedan modalen.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
@@ -43,11 +48,13 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
       status,
       applicationDate,
       notes,
+      // Dela upp taggsträngen på komma, trimma och släng tomma värden.
       tags: tagsInput
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean),
       url: url || undefined,
+      // Behåll käll-id och historik från originalansökan vid redigering.
       sourceId: application?.sourceId,
       statusHistory: application?.statusHistory || [],
     });

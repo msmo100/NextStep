@@ -3,10 +3,12 @@ import { Kanban, Search, BarChart3, LogOut } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import './Layout.css';
 
+// Den gemensamma ramen runt alla inloggade sidor: sidhuvud med navigering + sidans innehåll.
 export function Layout() {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // Loggar ut och skickar tillbaka användaren till inloggningssidan.
   const handleLogout = async () => {
     await signOut();
     navigate('/login');

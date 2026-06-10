@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
 import type { SavedSearch, JobSearchFilters } from '../types';
 
+// Hur en rad i databastabellen "saved_searches" ser ut.
 interface SavedSearchRow {
   id: string;
   user_id: string;
@@ -10,6 +11,7 @@ interface SavedSearchRow {
   created_at: string;
 }
 
+// Översätter en databasrad till appens SavedSearch-format.
 function rowToSavedSearch(row: SavedSearchRow): SavedSearch {
   return {
     id: row.id,
@@ -20,6 +22,7 @@ function rowToSavedSearch(row: SavedSearchRow): SavedSearch {
   };
 }
 
+// Hämtar användarens sparade sökningar, nyast först.
 export async function fetchSavedSearches(): Promise<SavedSearch[]> {
   const { data, error } = await supabase
     .from('saved_searches')
@@ -29,6 +32,7 @@ export async function fetchSavedSearches(): Promise<SavedSearch[]> {
   return (data as SavedSearchRow[]).map(rowToSavedSearch);
 }
 
+// Sparar en ny sökning kopplad till användaren och returnerar den.
 export async function insertSavedSearch(
   userId: string,
   search: Omit<SavedSearch, 'id' | 'createdAt'>
@@ -47,6 +51,7 @@ export async function insertSavedSearch(
   return rowToSavedSearch(data as SavedSearchRow);
 }
 
+// Tar bort en sparad sökning med angivet id.
 export async function deleteSavedSearchRow(id: string): Promise<void> {
   const { error } = await supabase.from('saved_searches').delete().eq('id', id);
   if (error) throw error;

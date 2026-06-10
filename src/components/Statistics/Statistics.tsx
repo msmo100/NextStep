@@ -19,6 +19,7 @@ import { loadWeeklyGoal, saveWeeklyGoal } from '../../services/storage';
 import { exportToCsv, exportToPdf, exportArbetsformedlingenReport } from '../../services/exportData';
 import './Statistics.css';
 
+// Registrerar de delar av Chart.js som behövs för cirkel-, stapel- och linjediagrammen.
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -31,10 +32,12 @@ ChartJS.register(
   Filler
 );
 
+// Props: alla ansökningar som statistiken ska räknas på.
 interface StatisticsProps {
   applications: JobApplication[];
 }
 
+// Formaterar ett datum som YYYY-MM-DD i lokal tid (undviker tidszonsfel som toISOString kan ge).
 function toLocalDateString(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -42,10 +45,13 @@ function toLocalDateString(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
+// Statistiksidan: nyckeltal, diagram och exportfunktioner.
 export function Statistics({ applications }: StatisticsProps) {
+  // Veckomål och om det redigeras just nu.
   const [weeklyGoal, setWeeklyGoal] = useState(10);
   const [editingGoal, setEditingGoal] = useState(false);
 
+  // Datumintervall för aktivitetsrapporten – från månadens första dag till idag som standard.
   const [afFromDate, setAfFromDate] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -53,10 +59,12 @@ export function Statistics({ applications }: StatisticsProps) {
   });
   const [afToDate, setAfToDate] = useState(() => toLocalDateString(new Date()));
 
+  // Läs in det sparade veckomålet när sidan laddas.
   useEffect(() => {
     setWeeklyGoal(loadWeeklyGoal());
   }, []);
 
+  // Räknar antal ansökningar per status (till översiktskorten och cirkeldiagrammet).
   const statusCounts = useMemo(() => {
     const counts: Record<string, number> = {};
     ALL_STATUSES.forEach((s) => (counts[s] = 0));
@@ -66,6 +74,7 @@ export function Statistics({ applications }: StatisticsProps) {
     return counts;
   }, [applications]);
 
+  // De 8 företag man sökt flest jobb hos, mest överst (till stapeldiagrammet).
   const topCompanies = useMemo(() => {
     const counts: Record<string, number> = {};
     applications.forEach((app) => {
@@ -76,15 +85,18 @@ export function Statistics({ applications }: StatisticsProps) {
       .slice(0, 8);
   }, [applications]);
 
+  // Antal ansökningar per vecka över tid (till linjediagrammet).
   const timelineData = useMemo(() => {
     const byWeek: Record<string, number> = {};
     applications.forEach((app) => {
+      // Avrunda varje datum till veckans måndag och räkna per sådan veckostart.
       const date = new Date(app.applicationDate);
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay() + 1);
       const key = weekStart.toISOString().split('T')[0];
       byWeek[key] = (byWeek[key] || 0) + 1;
     });
+    // Sortera kronologiskt och dela upp i etiketter (datum) och värden (antal).
     const sorted = Object.entries(byWeek).sort((a, b) => a[0].localeCompare(b[0]));
     return {
       labels: sorted.map(([date]) => new Date(date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })),
@@ -92,6 +104,7 @@ export function Statistics({ applications }: StatisticsProps) {
     };
   }, [applications]);
 
+  // Svarsfrekvens: andel av de sökta jobben som gått vidare till intervju eller erbjudande.
   const responseRate = useMemo(() => {
     const applied = applications.filter(
       (a) => a.status !== 'to-apply'
@@ -103,7 +116,9 @@ export function Statistics({ applications }: StatisticsProps) {
     return Math.round((progressed.length / applied.length) * 100);
   }, [applications]);
 
+  // Genomsnittlig tid (i dagar) som ansökningar tillbringar i varje steg, ur statushistoriken.
   const avgTimePerStage = useMemo(() => {
+    // Samla in alla uppmätta varaktigheter per status.
     const durations: Record<ApplicationStatus, number[]> = {
       'to-apply': [],
       applied: [],
@@ -116,9 +131,11 @@ export function Statistics({ applications }: StatisticsProps) {
       const history = app.statusHistory || [];
       if (history.length === 0) continue;
 
+      // Utgå från när ansökan skapades och dess första status.
       let prevTime = new Date(app.createdAt).getTime();
       let prevStatus = history[0].from;
 
+      // Gå igenom varje statusbyte och mät hur länge föregående status varade.
       for (const change of history) {
         const changeTime = new Date(change.timestamp).getTime();
         const days = (changeTime - prevTime) / (1000 * 60 * 60 * 24);
@@ -130,6 +147,7 @@ export function Statistics({ applications }: StatisticsProps) {
       }
     }
 
+    // Räkna ut medelvärdet per status (avrundat till en decimal).
     const result: Partial<Record<ApplicationStatus, number>> = {};
     for (const status of ALL_STATUSES) {
       const vals = durations[status];
@@ -140,7 +158,9 @@ export function Statistics({ applications }: StatisticsProps) {
     return result;
   }, [applications]);
 
+  // Antal jobb man sökt den här veckan (måndag–nu) – mäts mot veckomålet.
   const weeklyProgress = useMemo(() => {
+    // Räkna ut den här veckans måndag kl. 00:00.
     const now = new Date();
     const dayOfWeek = now.getDay();
     const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
@@ -148,6 +168,7 @@ export function Statistics({ applications }: StatisticsProps) {
     weekStart.setDate(now.getDate() + mondayOffset);
     weekStart.setHours(0, 0, 0, 0);
 
+    // Räkna sökta jobb (ej "att söka") med ansökningsdatum från och med måndag.
     const thisWeek = applications.filter((app) => {
       const appDate = new Date(app.applicationDate);
       return appDate >= weekStart && app.status !== 'to-apply';
@@ -156,6 +177,7 @@ export function Statistics({ applications }: StatisticsProps) {
     return thisWeek.length;
   }, [applications]);
 
+  // Sparar ett nytt veckomål (klämt till 1–100) och stänger redigeringsläget.
   const handleGoalChange = (newGoal: number) => {
     const clamped = Math.max(1, Math.min(100, newGoal));
     setWeeklyGoal(clamped);
@@ -163,8 +185,10 @@ export function Statistics({ applications }: StatisticsProps) {
     setEditingGoal(false);
   };
 
+  // Hur stor andel av veckomålet som uppnåtts, i procent (max 100).
   const goalPercent = Math.min(100, Math.round((weeklyProgress / weeklyGoal) * 100));
 
+  // Data för cirkeldiagrammet (fördelning per status).
   const doughnutData = {
     labels: ALL_STATUSES.map((s) => STATUS_LABELS[s]),
     datasets: [
@@ -177,6 +201,7 @@ export function Statistics({ applications }: StatisticsProps) {
     ],
   };
 
+  // Data för stapeldiagrammet (topp-företag).
   const barData = {
     labels: topCompanies.map(([name]) => name),
     datasets: [
@@ -189,6 +214,7 @@ export function Statistics({ applications }: StatisticsProps) {
     ],
   };
 
+  // Data för linjediagrammet (ansökningar över tid).
   const lineData = {
     labels: timelineData.labels,
     datasets: [
@@ -204,6 +230,7 @@ export function Statistics({ applications }: StatisticsProps) {
     ],
   };
 
+  // Gemensamma inställningar för diagrammen (anpassar storlek, döljer förklaring som standard).
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
@@ -212,6 +239,7 @@ export function Statistics({ applications }: StatisticsProps) {
     },
   };
 
+  // Utan ansökningar finns inget att visa – visa ett tomtillstånd i stället.
   if (applications.length === 0) {
     return (
       <div className="stats-empty">
@@ -222,6 +250,7 @@ export function Statistics({ applications }: StatisticsProps) {
     );
   }
 
+  // Sant om det finns minst en uppmätt snittid att visa.
   const hasTimeData = Object.keys(avgTimePerStage).length > 0;
 
   return (

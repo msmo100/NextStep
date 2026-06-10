@@ -1,8 +1,10 @@
+// Ett alternativ i en filtermeny: API:ets kod (id) plus svensk text (label).
 export interface TaxonomyOption {
   id: string;
   label: string;
 }
 
+// Yrkesområden – id:n hämtade från Arbetsförmedlingens taxonomi.
 export const OCCUPATION_FIELDS: TaxonomyOption[] = [
   { id: 'X82t_awd_Qyc', label: 'Administration, ekonomi, juridik' },
   { id: 'j7Cq_ZJe_GkT', label: 'Bygg och anläggning' },
@@ -27,6 +29,7 @@ export const OCCUPATION_FIELDS: TaxonomyOption[] = [
   { id: '6Hq3_tKo_V57', label: 'Yrken med teknisk inriktning' },
 ];
 
+// Anställningstyper (tillsvidare, vikariat osv.).
 export const EMPLOYMENT_TYPES: TaxonomyOption[] = [
   { id: 'kpPX_CNN_gDU', label: 'Tillsvidareanställning' },
   { id: 'sTu5_NBQ_udq', label: 'Tidsbegränsad anställning' },
@@ -35,6 +38,7 @@ export const EMPLOYMENT_TYPES: TaxonomyOption[] = [
   { id: 'EBhX_Qm2_8eX', label: 'Säsongsanställning' },
 ];
 
+// Sveriges län, för regionsfiltret.
 export const REGIONS: TaxonomyOption[] = [
   { id: 'DQZd_uYs_oKb', label: 'Blekinge län' },
   { id: 'oDpK_oZ2_WYt', label: 'Dalarnas län' },
@@ -59,8 +63,10 @@ export const REGIONS: TaxonomyOption[] = [
   { id: 'oLT3_Q9p_3nn', label: 'Östergötlands län' },
 ];
 
+// Alla alternativ samlade i en lista, för snabb uppslagning på id.
 const ALL_OPTIONS = [...OCCUPATION_FIELDS, ...EMPLOYMENT_TYPES, ...REGIONS];
 
+// Slår upp den svenska texten för ett id (används för att visa namnet på sparade sökningar).
 export function labelForId(id: string | undefined): string | undefined {
   if (!id) return undefined;
   return ALL_OPTIONS.find((o) => o.id === id)?.label;

@@ -6,6 +6,7 @@ import { STATUS_LABELS, STATUS_COLORS } from '../../types';
 import { KanbanCard } from './KanbanCard';
 import './Kanban.css';
 
+// Props för en kolumn: dess status, korten i den, och callbacks för åtgärder.
 interface KanbanColumnProps {
   status: ApplicationStatus;
   applications: JobApplication[];
@@ -14,7 +15,9 @@ interface KanbanColumnProps {
   onAdd: (status: ApplicationStatus) => void;
 }
 
+// En enskild kanban-kolumn (en status). Fungerar som släppyta för dra-och-släpp.
 export function KanbanColumn({ status, applications, onEdit, onDelete, onAdd }: KanbanColumnProps) {
+  // Gör kolumnen till en giltig släppyta. isOver är sant när ett kort dras över den.
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (

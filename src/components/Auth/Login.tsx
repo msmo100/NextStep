@@ -4,9 +4,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { isSupabaseConfigured } from '../../services/supabase';
 import './Login.css';
 
+// Sidan kan vara i två lägen: logga in eller skapa konto.
 type Mode = 'signin' | 'signup';
 
+// Inloggnings-/registreringssidan.
 export function Login() {
+  // Formulärets tillstånd: läge, fält och meddelanden.
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -17,14 +20,17 @@ export function Login() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
+  // Byter mellan logga in/skapa konto och rensar gamla meddelanden.
   const switchMode = (next: Mode) => {
     setMode(next);
     setError(null);
     setInfo(null);
   };
 
+  // Hanterar inskickat formulär: loggar in eller skapar konto beroende på läge.
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    // Avbryt tidigt om Supabase inte är uppsatt – annars går inget att göra.
     if (!isSupabaseConfigured) {
       setError('Supabase är inte konfigurerat. Se README för uppsättning.');
       return;
@@ -34,6 +40,7 @@ export function Login() {
     setSubmitting(true);
 
     if (mode === 'signin') {
+      // Inloggning: vid lyckad inloggning skickas användaren till startsidan.
       const { error } = await signIn(email, password);
       setSubmitting(false);
       if (error) {
@@ -42,6 +49,7 @@ export function Login() {
       }
       navigate('/');
     } else {
+      // Registrering: vid lyckad registrering be användaren bekräfta e-post och byt till inloggning.
       const { error } = await signUp(email, password, name);
       setSubmitting(false);
       if (error) {
@@ -61,6 +69,7 @@ export function Login() {
           <span>by Max Moro</span>
         </Link>
 
+        {/* Kortet med formuläret. Rubrik och texter byter beroende på läge. */}
         <div className="auth-card">
           <h2>{mode === 'signin' ? 'Logga in' : 'Skapa konto'}</h2>
           <p className="auth-subtitle">
@@ -70,6 +79,7 @@ export function Login() {
           </p>
 
           <form onSubmit={handleSubmit}>
+            {/* Namnfältet visas bara vid registrering. */}
             {mode === 'signup' && (
               <div className="auth-field">
                 <label htmlFor="name">Namn</label>
@@ -84,6 +94,7 @@ export function Login() {
               </div>
             )}
 
+            {/* E-postfält. */}
             <div className="auth-field">
               <label htmlFor="email">E-post</label>
               <input
@@ -96,6 +107,7 @@ export function Login() {
               />
             </div>
 
+            {/* Lösenordsfält. Vid registrering krävs minst 8 tecken. */}
             <div className="auth-field">
               <label htmlFor="password">Lösenord</label>
               <input
@@ -115,9 +127,11 @@ export function Login() {
               </a>
             )}
 
+            {/* Fel- respektive informationsmeddelande, visas vid behov. */}
             {error && <p className="auth-error">{error}</p>}
             {info && <p className="auth-info">{info}</p>}
 
+            {/* Skicka-knappen. Inaktiv och visar väntetext medan inskickning pågår. */}
             <button type="submit" className="auth-submit" disabled={submitting}>
               {submitting
                 ? 'Ett ögonblick…'
@@ -127,6 +141,7 @@ export function Login() {
             </button>
           </form>
 
+          {/* Länk längst ner för att växla mellan logga in och skapa konto. */}
           <p className="auth-toggle">
             {mode === 'signin' ? (
               <>

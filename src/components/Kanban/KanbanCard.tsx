@@ -5,13 +5,16 @@ import { Trash2, Edit3, Calendar, MapPin } from 'lucide-react';
 import type { JobApplication } from '../../types';
 import './Kanban.css';
 
+// Props för ett kort: ansökan att visa + callbacks för redigera/ta bort.
 interface KanbanCardProps {
   application: JobApplication;
   onEdit: (app: JobApplication) => void;
   onDelete: (id: string) => void;
 }
 
+// Ett enskilt ansökningskort i kanban-tavlan. Är dragbart.
 export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
+  // Kopplar in kortet i dra-och-släpp-systemet och ger oss positions-/dragdata.
   const {
     attributes,
     listeners,
@@ -21,12 +24,14 @@ export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
     isDragging,
   } = useSortable({ id: application.id });
 
+  // Stil som flyttar kortet under drag och gör det halvgenomskinligt medan det dras.
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
   };
 
+  // Hindrar att ett knapptryck startar ett drag (annars går knapparna inte att klicka).
   const stopDragPointer = (e: PointerEvent) => e.stopPropagation();
 
   return (
