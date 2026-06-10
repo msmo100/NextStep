@@ -8,6 +8,7 @@ export async function searchJobs(
   offset = 0,
   limit = 20
 ): Promise<JobSearchResponse> {
+
   const params = new URLSearchParams({
     offset: String(offset),
     limit: String(limit),

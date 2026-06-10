@@ -1,12 +1,8 @@
-// Taxonomy concept IDs from the JobTech Taxonomy API (taxonomy.api.jobtechdev.se).
-// Used as filter values for the JobSearch API (jobsearch.api.jobtechdev.se).
-
 export interface TaxonomyOption {
   id: string;
   label: string;
 }
 
-// type=occupation-field
 export const OCCUPATION_FIELDS: TaxonomyOption[] = [
   { id: 'X82t_awd_Qyc', label: 'Administration, ekonomi, juridik' },
   { id: 'j7Cq_ZJe_GkT', label: 'Bygg och anläggning' },
@@ -31,7 +27,6 @@ export const OCCUPATION_FIELDS: TaxonomyOption[] = [
   { id: '6Hq3_tKo_V57', label: 'Yrken med teknisk inriktning' },
 ];
 
-// type=employment-type
 export const EMPLOYMENT_TYPES: TaxonomyOption[] = [
   { id: 'kpPX_CNN_gDU', label: 'Tillsvidareanställning' },
   { id: 'sTu5_NBQ_udq', label: 'Tidsbegränsad anställning' },
@@ -40,7 +35,6 @@ export const EMPLOYMENT_TYPES: TaxonomyOption[] = [
   { id: 'EBhX_Qm2_8eX', label: 'Säsongsanställning' },
 ];
 
-// type=region — the 21 Swedish counties (län)
 export const REGIONS: TaxonomyOption[] = [
   { id: 'DQZd_uYs_oKb', label: 'Blekinge län' },
   { id: 'oDpK_oZ2_WYt', label: 'Dalarnas län' },

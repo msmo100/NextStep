@@ -30,7 +30,8 @@ export function exportToCsv(applications: JobApplication[]): void {
     .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
-  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const bom = String.fromCharCode(0xfeff);
+  const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
   downloadBlob(blob, `nextstep-ansokan-${new Date().toISOString().split('T')[0]}.csv`);
 }
 

@@ -37,7 +37,6 @@ export function useApplications() {
   }, [user]);
 
   useEffect(() => {
-    // Sync applications with Supabase whenever the signed-in user changes.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     reload();
   }, [reload]);
@@ -74,7 +73,6 @@ export function useApplications() {
       }
       const merged = { ...existing, ...updates, statusHistory };
 
-      // Optimistic update, reconcile on failure.
       setApplications((prev) => prev.map((a) => (a.id === id ? merged : a)));
       try {
         await updateApplicationRow(id, { ...updates, statusHistory });

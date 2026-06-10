@@ -33,8 +33,14 @@ Supabase (auth + Postgres) and deployable to Vercel.
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in your Supabase URL + anon key
 npm run dev
+```
+
+Create a `.env.local` file in the project root with your Supabase credentials:
+
+```
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-public-key
 ```
 
 The app runs at http://localhost:5173. Without valid Supabase env vars the login

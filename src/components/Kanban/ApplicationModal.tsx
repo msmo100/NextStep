@@ -56,6 +56,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
 
   return (
     <div className="modal-overlay" onClick={onClose}>
+      {/* Själva rutan. stopPropagation hindrar att klick inuti stänger den. */}
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{application ? 'Redigera ansökan' : 'Ny ansökan'}</h2>
@@ -64,6 +65,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
           </button>
         </div>
         <form onSubmit={handleSubmit}>
+          {/* Obligatoriskt: jobbtitel. */}
           <div className="form-group">
             <label htmlFor="jobTitle">Jobbtitel *</label>
             <input
@@ -75,6 +77,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               placeholder="t.ex. Frontend-utvecklare"
             />
           </div>
+          {/* Obligatoriskt: företag. */}
           <div className="form-group">
             <label htmlFor="company">Företag *</label>
             <input
@@ -86,6 +89,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               placeholder="t.ex. Spotify"
             />
           </div>
+          {/* Rad med plats + status (rullgardin med alla statusar). */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="location">Plats</label>
@@ -112,6 +116,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               </select>
             </div>
           </div>
+          {/* Rad med datum + taggar. */}
           <div className="form-row">
             <div className="form-group">
               <label htmlFor="applicationDate">Datum</label>
@@ -133,6 +138,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               />
             </div>
           </div>
+          {/* Länk till annonsen. */}
           <div className="form-group">
             <label htmlFor="url">Länk</label>
             <input
@@ -143,6 +149,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               placeholder="https://..."
             />
           </div>
+          {/* Fritextanteckningar. */}
           <div className="form-group">
             <label htmlFor="notes">Anteckningar</label>
             <textarea
@@ -153,6 +160,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               placeholder="Egna anteckningar..."
             />
           </div>
+          {/* Knappar: avbryt eller spara. */}
           <div className="modal-actions">
             <button type="button" className="btn btn-secondary" onClick={onClose}>
               Avbryt

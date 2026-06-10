@@ -37,6 +37,7 @@ export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
       {...attributes}
       {...listeners}
     >
+      {/* Åtgärdsknappar: redigera och ta bort. onPointerDown stoppar drag-start. */}
       <div className="kanban-card-header">
         <div className="kanban-card-actions">
           <button
@@ -55,18 +56,22 @@ export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
           </button>
         </div>
       </div>
+      {/* Innehållet: titel och företag. */}
       <h4 className="kanban-card-title">{application.jobTitle}</h4>
       <p className="kanban-card-company">{application.company}</p>
+      {/* Plats visas bara om den finns. */}
       {application.location && (
         <p className="kanban-card-meta">
           <MapPin size={12} />
           {application.location}
         </p>
       )}
+      {/* Ansökningsdatum, formaterat på svenska. */}
       <p className="kanban-card-meta">
         <Calendar size={12} />
         {new Date(application.applicationDate).toLocaleDateString('sv-SE')}
       </p>
+      {/* Taggar visas bara om det finns några. */}
       {application.tags.length > 0 && (
         <div className="kanban-card-tags">
           {application.tags.map((tag) => (
@@ -76,6 +81,7 @@ export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
           ))}
         </div>
       )}
+      {/* Anteckningar visas bara om de finns. */}
       {application.notes && (
         <p className="kanban-card-notes">{application.notes}</p>
       )}

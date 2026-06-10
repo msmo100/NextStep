@@ -16,10 +16,12 @@ export function Layout() {
     <div className="app-layout">
       <header className="app-header">
         <div className="header-content">
+          {/* Logotyp/varumärke. */}
           <div className="header-brand">
             <h1>NextStep</h1>
             <span className="header-byline">by Max Moro</span>
           </div>
+          {/* Navigeringslänkar. NavLink markerar automatiskt den aktiva sidan. */}
           <nav className="header-nav">
             <NavLink to="/" end>
               <Kanban size={18} />
@@ -33,6 +35,7 @@ export function Layout() {
               <BarChart3 size={18} />
               <span>Statistik</span>
             </NavLink>
+            {/* Utloggningsknappen visas bara när någon är inloggad. */}
             {user && (
               <button type="button" className="header-nav-logout" onClick={handleLogout}>
                 <LogOut size={18} />
@@ -42,6 +45,7 @@ export function Layout() {
           </nav>
         </div>
       </header>
+      {/* Här renderas den aktuella sidan (tavlan, sökningen eller statistiken). */}
       <main className="app-main">
         <Outlet />
       </main>

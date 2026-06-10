@@ -92,7 +92,6 @@ export function Statistics({ applications }: StatisticsProps) {
     };
   }, [applications]);
 
-  // Response rate: % of applications that moved beyond "applied"
   const responseRate = useMemo(() => {
     const applied = applications.filter(
       (a) => a.status !== 'to-apply'
@@ -104,7 +103,6 @@ export function Statistics({ applications }: StatisticsProps) {
     return Math.round((progressed.length / applied.length) * 100);
   }, [applications]);
 
-  // Average time per stage (in days)
   const avgTimePerStage = useMemo(() => {
     const durations: Record<ApplicationStatus, number[]> = {
       'to-apply': [],
@@ -118,7 +116,6 @@ export function Statistics({ applications }: StatisticsProps) {
       const history = app.statusHistory || [];
       if (history.length === 0) continue;
 
-      // Time from creation to first status change
       let prevTime = new Date(app.createdAt).getTime();
       let prevStatus = history[0].from;
 
@@ -143,7 +140,6 @@ export function Statistics({ applications }: StatisticsProps) {
     return result;
   }, [applications]);
 
-  // Weekly goal progress
   const weeklyProgress = useMemo(() => {
     const now = new Date();
     const dayOfWeek = now.getDay();
@@ -230,6 +226,7 @@ export function Statistics({ applications }: StatisticsProps) {
 
   return (
     <div className="statistics">
+      {/* Översiktskort: antal per status + totalt. */}
       <div className="stats-summary">
         {ALL_STATUSES.map((status) => (
           <div key={status} className="stat-card">
@@ -248,7 +245,9 @@ export function Statistics({ applications }: StatisticsProps) {
         </div>
       </div>
 
+      {/* Insiktskort: svarsfrekvens, veckomål och snittid per steg. */}
       <div className="insights-row">
+        {/* Svarsfrekvens. */}
         <div className="insight-card">
           <div className="insight-header">
             <Percent size={18} />
@@ -266,6 +265,7 @@ export function Statistics({ applications }: StatisticsProps) {
           )}
         </div>
 
+        {/* Veckomål med progress-bar och möjlighet att ändra målet. */}
         <div className="insight-card">
           <div className="insight-header">
             <Target size={18} />
@@ -282,6 +282,7 @@ export function Statistics({ applications }: StatisticsProps) {
             <div className="goal-numbers">
               <span className="insight-value">{weeklyProgress}</span>
               <span className="goal-separator">/</span>
+              {/* Visa inmatningsfält i redigeringsläge, annars bara siffran. */}
               {editingGoal ? (
                 <input
                   type="number"
@@ -314,6 +315,7 @@ export function Statistics({ applications }: StatisticsProps) {
           </div>
         </div>
 
+        {/* Snittid per steg (om det finns historik att räkna på). */}
         <div className="insight-card">
           <div className="insight-header">
             <Clock size={18} />
@@ -328,6 +330,7 @@ export function Statistics({ applications }: StatisticsProps) {
                     <span>{STATUS_LABELS[status]}</span>
                   </div>
                   <span className="time-stage-value">
+                    {/* Visa timmar om mindre än en dag, annars dagar. */}
                     {avgTimePerStage[status]! < 1
                       ? `${Math.round(avgTimePerStage[status]! * 24)}h`
                       : `${avgTimePerStage[status]} d`}
@@ -343,6 +346,7 @@ export function Statistics({ applications }: StatisticsProps) {
         </div>
       </div>
 
+      {/* Export: ladda ner CSV eller skriv ut PDF. */}
       <div className="export-row">
         <div className="export-card">
           <div className="export-info">
@@ -363,6 +367,7 @@ export function Statistics({ applications }: StatisticsProps) {
         </div>
       </div>
 
+      {/* Aktivitetsrapport till Arbetsförmedlingen: välj datumintervall och skapa rapport. */}
       <div className="export-row">
         <div className="export-card export-card-af">
           <div className="export-info">
@@ -405,6 +410,7 @@ export function Statistics({ applications }: StatisticsProps) {
         </div>
       </div>
 
+      {/* Diagrammen: cirkel (status), stapel (företag) och linje (över tid). */}
       <div className="stats-charts">
         <div className="chart-card">
           <h3>Status fördelning</h3>

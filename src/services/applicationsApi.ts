@@ -1,7 +1,6 @@
 import { supabase } from './supabase';
 import type { JobApplication } from '../types';
 
-// Shape of a row in the public.applications table (snake_case columns).
 interface ApplicationRow {
   id: string;
   user_id: string;
@@ -37,8 +36,6 @@ function rowToApp(row: ApplicationRow): JobApplication {
   };
 }
 
-// Maps the camelCase fields a caller may change to their snake_case columns.
-// Only defined keys are returned, so this works for both insert and update.
 function appToColumns(
   app: Partial<Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>>
 ): Record<string, unknown> {

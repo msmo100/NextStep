@@ -22,6 +22,7 @@ export function KanbanColumn({ status, applications, onEdit, onDelete, onAdd }: 
       ref={setNodeRef}
       className={`kanban-column ${isOver ? 'kanban-column-over' : ''}`}
     >
+      {/* Rubrik: färgprick, statusnamn, antal kort och en plus-knapp för att lägga till. */}
       <div className="kanban-column-header" style={{ borderTopColor: STATUS_COLORS[status] }}>
         <div className="kanban-column-title">
           <span
@@ -35,12 +36,14 @@ export function KanbanColumn({ status, applications, onEdit, onDelete, onAdd }: 
           <Plus size={16} />
         </button>
       </div>
+      {/* Kortlistan. SortableContext gör korten sorterbara/dragbara inom kolumnen. */}
       <div className="kanban-column-body">
         <SortableContext items={applications.map((a) => a.id)} strategy={verticalListSortingStrategy}>
           {applications.map((app) => (
             <KanbanCard key={app.id} application={app} onEdit={onEdit} onDelete={onDelete} />
           ))}
         </SortableContext>
+        {/* Tom kolumn → visa en hjälptext. */}
         {applications.length === 0 && (
           <p className="kanban-empty">Inga ansökningar</p>
         )}

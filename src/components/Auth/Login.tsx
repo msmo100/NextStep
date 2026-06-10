@@ -48,7 +48,6 @@ export function Login() {
         setError(error);
         return;
       }
-      // With email confirmation enabled there is no session yet.
       setInfo('Konto skapat! Kontrollera din e-post för att bekräfta kontot, logga sedan in.');
       setMode('signin');
     }

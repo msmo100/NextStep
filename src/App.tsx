@@ -48,6 +48,7 @@ function AppContent() {
           </ProtectedRoute>
         }
       >
+        {/* Startsidan (/) = Kanban-tavlan. Datan och funktionerna skickas ner som props. */}
         <Route
           index
           element={
@@ -61,12 +62,14 @@ function AppContent() {
             />
           }
         />
+        {/* /search = jobbsökningen. onSaveJob sparar en annons som en ny ansökan. */}
         <Route
           path="search"
           element={
             <JobSearch onSaveJob={addApplication} savedJobIds={savedJobIds} />
           }
         />
+        {/* /statistics = statistiksidan, som räknar på samma applications-data. */}
         <Route
           path="statistics"
           element={<Statistics applications={applications} />}

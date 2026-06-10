@@ -75,7 +75,6 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
   const limit = 20;
 
   useEffect(() => {
-    // Load this user's saved searches from Supabase; clear them on sign-out.
     if (!user) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setSavedSearches([]);
@@ -188,6 +187,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
 
   return (
     <div className="job-search">
+      {/* Sökfält + sökknapp. */}
       <form onSubmit={handleSearch} className="search-form">
         <div className="search-input-wrapper">
           <Search size={18} />
@@ -195,7 +195,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Sök jobb, t.ex. &quot;Frontend-utvecklare&quot;"
+            placeholder="Sök jobb"
             className="search-input"
           />
         </div>
@@ -204,6 +204,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         </button>
       </form>
 
+      {/* Filterrad: län, yrkesområde, anställningstyp, distans + "spara sökning". */}
       <div className="search-filters">
         <select
           className="filter-select"
@@ -266,6 +267,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         </button>
       </div>
 
+      {/* Namnge-fält som visas när man håller på att spara en sökning. */}
       {savingName !== null && (
         <div className="save-search-row">
           <input
@@ -289,6 +291,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         </div>
       )}
 
+      {/* Lista med sparade sökningar (chips). Klick kör sökningen, X tar bort den. */}
       {savedSearches.length > 0 && (
         <div className="saved-searches">
           <span className="saved-searches-label">Sparade sökningar</span>
@@ -316,6 +319,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         </div>
       )}
 
+      {/* Felmeddelande och antal träffar. */}
       {error && <div className="search-error">{error}</div>}
 
       {hasSearched && !loading && (
@@ -324,10 +328,12 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         </p>
       )}
 
+      {/* Resultatlistan: ett kort per jobb. */}
       <div className="search-results">
         {results.map((job) => (
           <div key={job.id} className="job-card">
             <div className="job-card-main">
+              {/* Annonsens info: titel, arbetsgivare, plats, datum, anställningstyp. */}
               <div className="job-card-info">
                 <h3 className="job-card-title">{job.headline}</h3>
                 <p className="job-card-company">{job.employer.name}</p>
@@ -350,6 +356,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
                   )}
                 </div>
               </div>
+              {/* Knappar: spara annonsen (inaktiv om redan sparad) + visa mer/dölj. */}
               <div className="job-card-actions">
                 <button
                   className="btn btn-primary btn-sm"
@@ -372,6 +379,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
                 </button>
               </div>
             </div>
+            {/* Utfälld del: beskrivning, sista ansökningsdag och länk – bara för det öppnade kortet. */}
             {expandedId === job.id && job.description?.text && (
               <div className="job-card-description">
                 <p>{job.description.text.substring(0, 600)}...</p>
@@ -397,6 +405,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         ))}
       </div>
 
+      {/* Paginering: föregående/nästa sida (visas bara om det finns fler än en sida). */}
       {totalPages > 1 && (
         <div className="search-pagination">
           <button

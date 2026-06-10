@@ -71,7 +71,6 @@ export function KanbanBoard({
 
       const overId = over.id as string;
 
-      // Dropping over a column
       if (ALL_STATUSES.includes(overId as ApplicationStatus)) {
         if (activeApp.status !== overId) {
           onMove(activeApp.id, overId as ApplicationStatus);
@@ -79,7 +78,6 @@ export function KanbanBoard({
         return;
       }
 
-      // Dropping over another card
       const overApp = applications.find((a) => a.id === overId);
       if (overApp && activeApp.status !== overApp.status) {
         onMove(activeApp.id, overApp.status);
@@ -126,6 +124,7 @@ export function KanbanBoard({
 
   return (
     <>
+      {/* DndContext kopplar ihop hela dra-och-släpp-systemet. */}
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}
@@ -133,6 +132,7 @@ export function KanbanBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
+        {/* En kolumn per status, fylld med just den statusens ansökningar. */}
         <div className="kanban-board">
           {ALL_STATUSES.map((status) => (
             <KanbanColumn
@@ -145,6 +145,7 @@ export function KanbanBoard({
             />
           ))}
         </div>
+        {/* "Spökkortet" som följer muspekaren medan man drar. */}
         <DragOverlay>
           {activeApp ? (
             <KanbanCard
@@ -156,6 +157,7 @@ export function KanbanBoard({
         </DragOverlay>
       </DndContext>
 
+      {/* Formuläret (modalen) visas bara när modalOpen är sant. */}
       {modalOpen && (
         <ApplicationModal
           application={editingApp}
