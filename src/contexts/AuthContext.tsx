@@ -2,12 +2,15 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import type { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../services/supabase';
 
-// Resultatet av en inloggning/registrering: ett felmeddelande, eller null om allt gick bra.
+// Svaret vi får tillbaka när någon loggar in eller registrerar sig.
+// error = en text med vad som gick fel. Är den null gick allt bra.
 interface AuthResult {
   error: string | null;
 }
 
-// Allt som inloggnings-kontexten erbjuder resten av appen (data + funktioner).
+// Listan över allt som resten av appen kan hämta härifrån:
+// information om användaren (user, session, loading) och knappfunktioner
+// för att registrera sig, logga in och logga ut.
 interface AuthState {
   user: User | null;
   session: Session | null;
@@ -17,32 +20,36 @@ interface AuthState {
   signOut: () => Promise<void>;
 }
 
-// Själva kontexten – delar inloggningstillståndet med hela komponentträdet.
+// Själva "lådan" som håller inloggningsinfon så att alla komponenter i appen
+// kan komma åt den, utan att vi behöver skicka den manuellt från sida till sida.
 const AuthContext = createContext<AuthState | null>(null);
 
-// Wrappern som tillhandahåller inloggningstillståndet till alla barn-komponenter.
+// Komponenten du lägger runt appen. Allt som ligger inuti den (children) –
+// alla sidor och komponenter, hur djupt nästlade de än är – får tillgång till inloggningsinfon.
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Vid start: hämta en eventuell befintlig session (om användaren redan var inloggad).
+    // När appen startar: kolla om användaren redan är inloggad sedan tidigare.
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
     });
 
-    // Lyssna sedan på in-/utloggningar så tillståndet hålls uppdaterat i realtid.
+    // Bevaka sedan löpande när någon loggar in eller ut, så att appen
+    // alltid visar rätt status direkt – utan att sidan behöver laddas om.
     const { data: listener } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setLoading(false);
     });
 
-    // Städa upp lyssnaren när komponenten tas bort.
+    // Stäng av bevakningen när komponenten försvinner, så inget ligger kvar i bakgrunden.
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  // Registrerar ett nytt konto. Skickar med namn som metadata om det angetts.
+  // Skapar ett nytt konto med e-post och lösenord.
+  // Om ett namn har angetts sparas det också på kontot.
   const signUp = async (
     email: string,
     password: string,
@@ -56,18 +63,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   };
 
-  // Loggar in med e-post och lösenord.
+  // Loggar in en befintlig användare med e-post och lösenord.
   const signIn = async (email: string, password: string): Promise<AuthResult> => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     return { error: error?.message ?? null };
   };
 
-  // Loggar ut den aktuella användaren.
+  // Loggar ut användaren som är inloggad just nu.
   const signOut = async (): Promise<void> => {
     await supabase.auth.signOut();
   };
 
-  // Gör tillstånd och funktioner tillgängliga för alla barn. user härleds ur sessionen.
+  // Skickar ut all info och alla funktioner till komponenterna inuti appen.
+  // user plockas ut ur sessionen (finns ingen session är ingen inloggad = null).
   return (
     <AuthContext.Provider
       value={{ user: session?.user ?? null, session, loading, signUp, signIn, signOut }}
@@ -77,8 +85,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Genväg som komponenter använder för att läsa inloggningstillståndet.
-// Kastar ett fel om den används utanför AuthProvider (vanligt programmeringsmisstag).
+// Liten hjälpfunktion som komponenter anropar för att komma åt inloggningsinfon.
+// Glömmer man att lägga komponenten inuti AuthProvider finns ingen info att hämta,
+// och då kastas ett tydligt fel istället för att appen kraschar på ett svårförståeligt sätt.
 export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');

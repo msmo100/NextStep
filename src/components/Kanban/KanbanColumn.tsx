@@ -6,7 +6,8 @@ import { STATUS_LABELS, STATUS_COLORS } from '../../types';
 import { KanbanCard } from './KanbanCard';
 import './Kanban.css';
 
-// Props för en kolumn: dess status, korten i den, och callbacks för åtgärder.
+// Det en kolumn tar emot: vilken status den är, korten i den och funktioner
+// som körs när man redigerar, tar bort eller lägger till en ansökan.
 interface KanbanColumnProps {
   status: ApplicationStatus;
   applications: JobApplication[];
@@ -15,9 +16,9 @@ interface KanbanColumnProps {
   onAdd: (status: ApplicationStatus) => void;
 }
 
-// En enskild kanban-kolumn (en status). Fungerar som släppyta för dra-och-släpp.
+// En enskild kanban-kolumn (en status). Hit kan man släppa kort man drar.
 export function KanbanColumn({ status, applications, onEdit, onDelete, onAdd }: KanbanColumnProps) {
-  // Gör kolumnen till en giltig släppyta. isOver är sant när ett kort dras över den.
+  // Gör att man kan släppa kort på kolumnen. isOver blir sant när ett kort dras in över den.
   const { setNodeRef, isOver } = useDroppable({ id: status });
 
   return (
@@ -39,7 +40,7 @@ export function KanbanColumn({ status, applications, onEdit, onDelete, onAdd }: 
           <Plus size={16} />
         </button>
       </div>
-      {/* Kortlistan. SortableContext gör korten sorterbara/dragbara inom kolumnen. */}
+      {/* Listan med kort. Inpackningen runt dem är det som gör korten dragbara inom kolumnen. */}
       <div className="kanban-column-body">
         <SortableContext items={applications.map((a) => a.id)} strategy={verticalListSortingStrategy}>
           {applications.map((app) => (

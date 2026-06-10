@@ -1,7 +1,8 @@
 import { supabase } from './supabase';
 import type { JobApplication } from '../types';
 
-// Hur en rad ser ut i databastabellen "applications" (snake_case, kan vara null).
+// Hur en rad ser ut i databasens "applications"-tabell. Kolumnnamnen skrivs med
+// understreck (job_title), och fält kan sakna värde (null), till skillnad från i appen.
 interface ApplicationRow {
   id: string;
   user_id: string;
@@ -19,8 +20,8 @@ interface ApplicationRow {
   updated_at: string;
 }
 
-// Översätter en databasrad till appens JobApplication-format (snake_case → camelCase,
-// och null görs om till tomma värden).
+// Översätter en rad från databasen till appens format: byter understreck-namn (job_title)
+// mot appens namn (jobTitle), och gör om saknade värden (null) till tomma texter/listor.
 function rowToApp(row: ApplicationRow): JobApplication {
   return {
     id: row.id,
@@ -39,8 +40,8 @@ function rowToApp(row: ApplicationRow): JobApplication {
   };
 }
 
-// Motsatsen till rowToApp: bygger ett objekt med databaskolumner från ett (del-)JobApplication.
-// Bara fält som faktiskt skickats med tas med, så att en uppdatering inte nollställer resten.
+// Motsatsen till rowToApp: gör om en ansökan (eller delar av en) till databasens kolumnnamn.
+// Bara fält som faktiskt skickats med tas med, så att en uppdatering inte råkar tömma resten.
 function appToColumns(
   app: Partial<Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>>
 ): Record<string, unknown> {
@@ -59,7 +60,7 @@ function appToColumns(
 }
 
 // Hämtar alla ansökningar för den inloggade användaren, äldst först.
-// (Vilken användare som ses styrs av databasens säkerhetsregler.)
+// (Att man bara ser sina egna sköts av säkerhetsreglerna i databasen.)
 export async function fetchApplications(): Promise<JobApplication[]> {
   const { data, error } = await supabase
     .from('applications')

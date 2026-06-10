@@ -33,7 +33,8 @@ export const ALL_STATUSES: ApplicationStatus[] = [
   'offer',
 ];
 
-// En enskild statusförflyttning, sparas i historiken för att kunna mäta tider.
+// Ett enskilt statusbyte (från ett läge till ett annat, med tidpunkt).
+// Sparas i historiken så att vi kan räkna ut hur länge en ansökan låg i varje steg.
 export interface StatusChange {
   from: ApplicationStatus;
   to: ApplicationStatus;
@@ -57,7 +58,7 @@ export interface JobApplication {
   updatedAt: string;
 }
 
-// En träff från Arbetsförmedlingens jobbsöks-API (rådata, snake_case som API:et).
+// En träff från Arbetsförmedlingens jobbsöks-API, precis i den form API:et skickar den.
 export interface JobSearchResult {
   id: string;
   headline: string;

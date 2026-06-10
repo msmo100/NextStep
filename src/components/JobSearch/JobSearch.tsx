@@ -33,13 +33,14 @@ import type {
 } from '../../types';
 import './JobSearch.css';
 
-// Props: callback för att spara en annons som ansökan + mängd av redan sparade annons-id:n.
+// Det sidan tar emot: en funktion som sparar en annons som ansökan, och en lista
+// med id:n på annonser som redan är sparade (så vi kan visa "Sparad" på dem).
 interface JobSearchProps {
   onSaveJob: (app: Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>) => void;
   savedJobIds: Set<string>;
 }
 
-// Återanvänt tomt filterobjekt (startläge).
+// Tomt filter att börja med (inget valt).
 const EMPTY_FILTERS: JobSearchFilters = {};
 
 // Sant om minst ett filter är valt.
@@ -63,7 +64,8 @@ function describeSearch(query: string, filters: JobSearchFilters): string {
 
 // Sidan för att söka jobb mot API:et, spara sökningar och spara annonser som ansökningar.
 export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
-  // Sök-tillstånd: sökord, filter, resultat, totalt antal, sidoffset, laddning, fel, m.m.
+  // Allt sökningen håller reda på: sökord, valda filter, träffarna, totalt antal,
+  // var i listan vi är, om vi laddar, ev. felmeddelande och vilket kort som är utfällt.
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<JobSearchFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<JobSearchResult[]>([]);
@@ -74,7 +76,8 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Tillstånd kopplat till sparade sökningar.
+  // Det som hör till sparade sökningar: den inloggade användaren, listan med sparade
+  // sökningar och namnet man håller på att skriva när en sökning ska sparas.
   const { user } = useAuth();
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savingName, setSavingName] = useState<string | null>(null);
@@ -94,7 +97,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
       .catch((err) => console.error('Kunde inte hämta sparade sökningar:', err));
   }, [user]);
 
-  // Kör en sökning mot API:et och uppdaterar resultat-tillståndet. Avbryter om allt är tomt.
+  // Kör en sökning mot API:et och visar träffarna. Gör inget om både sökord och filter är tomma.
   const doSearch = useCallback(
     async (searchQuery: string, searchFilters: JobSearchFilters, searchOffset: number) => {
       if (!searchQuery.trim() && !hasAnyFilter(searchFilters)) return;
@@ -168,7 +171,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     doSearch(search.query, search.filters, 0);
   };
 
-  // Ta bort en sparad sökning (optimistiskt – läggs tillbaka om databasen klagar).
+  // Ta bort en sparad sökning. Försvinner direkt från skärmen och läggs tillbaka om databasen klagar.
   const handleDeleteSaved = async (id: string) => {
     const prev = savedSearches;
     setSavedSearches((p) => p.filter((s) => s.id !== id));
@@ -201,7 +204,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
     });
   };
 
-  // Räkna ut antal sidor och vilken sida vi är på (för pagineringen).
+  // Räkna ut hur många sidor av träffar det blir och vilken sida vi är på just nu.
   const totalPages = Math.ceil(total / limit);
   const currentPage = Math.floor(offset / limit) + 1;
 
@@ -311,7 +314,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         </div>
       )}
 
-      {/* Lista med sparade sökningar (chips). Klick kör sökningen, X tar bort den. */}
+      {/* De sparade sökningarna som små knappar. Klick kör sökningen, X tar bort den. */}
       {savedSearches.length > 0 && (
         <div className="saved-searches">
           <span className="saved-searches-label">Sparade sökningar</span>
@@ -425,7 +428,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
         ))}
       </div>
 
-      {/* Paginering: föregående/nästa sida (visas bara om det finns fler än en sida). */}
+      {/* Bläddring mellan sidor: föregående/nästa (visas bara om träffarna inte ryms på en sida). */}
       {totalPages > 1 && (
         <div className="search-pagination">
           <button

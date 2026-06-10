@@ -3,7 +3,8 @@ import type { JobSearchResponse, JobSearchFilters } from '../types';
 // Adressen till Arbetsförmedlingens öppna jobbsöks-API (JobTech).
 const BASE_URL = 'https://jobsearch.api.jobtechdev.se';
 
-// Söker jobb mot API:et. offset/limit används för sidindelning.
+// Söker jobb mot API:et. offset = var i träfflistan vi börjar, limit = hur många vi vill ha
+// (det är så vi delar upp träffarna i sidor: sida 2 börjar t.ex. vid offset 20).
 export async function searchJobs(
   query: string,
   filters: JobSearchFilters = {},
@@ -11,7 +12,7 @@ export async function searchJobs(
   limit = 20
 ): Promise<JobSearchResponse> {
 
-  // Grundparametrar: var i listan vi börjar, hur många, sortering på publiceringsdatum.
+  // Grundinställningar: var i listan vi börjar, hur många träffar, nyast annons först.
   const params = new URLSearchParams({
     offset: String(offset),
     limit: String(limit),

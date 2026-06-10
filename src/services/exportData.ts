@@ -34,7 +34,8 @@ export function exportToCsv(applications: JobApplication[]): void {
     .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
-  // BOM först gör att Excel öppnar filen med rätt teckenkodning (åäö visas korrekt).
+  // Ett osynligt tecken först i filen säger åt Excel att läsa den som svensk text,
+  // annars riskerar å, ä och ö att visas som konstiga tecken.
   const bom = String.fromCharCode(0xfeff);
   const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
   downloadBlob(blob, `nextstep-ansokan-${new Date().toISOString().split('T')[0]}.csv`);
@@ -188,7 +189,8 @@ export function exportArbetsformedlingenReport(
   }
 }
 
-// Gör om specialtecken till säkra HTML-entiteter så att text inte tolkas som kod.
+// Gör specialtecken (< > & ") ofarliga så att t.ex. ett företagsnamn med < i sig
+// visas som text i rapporten i stället för att råka tolkas som HTML-kod.
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -197,7 +199,7 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-// Hjälpare som triggar en filnedladdning i webbläsaren via en osynlig länk.
+// Startar en filnedladdning genom att i smyg skapa en länk, "klicka" på den och ta bort den igen.
 function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

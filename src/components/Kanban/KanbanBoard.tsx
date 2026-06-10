@@ -21,7 +21,8 @@ import { KanbanCard } from './KanbanCard';
 import { ApplicationModal } from './ApplicationModal';
 import './Kanban.css';
 
-// Props som tavlan tar emot: datan och callbacks för att lägga till/ändra/ta bort/flytta.
+// Det tavlan tar emot: listan med ansökningar och funktioner som körs när man
+// lägger till, ändrar, tar bort respektive flyttar en ansökan.
 interface KanbanBoardProps {
   applications: JobApplication[];
   getByStatus: (status: ApplicationStatus) => JobApplication[];
@@ -40,7 +41,7 @@ export function KanbanBoard({
   onDelete,
   onMove,
 }: KanbanBoardProps) {
-  // activeId = kortet som dras just nu. Resten styr formulär-modalen.
+  // activeId = vilket kort som dras just nu. De övriga styr formulärfönstret (öppet/redigeras/förvald kolumn).
   const [activeId, setActiveId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<JobApplication | null>(null);
@@ -51,14 +52,15 @@ export function KanbanBoard({
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  // Avgör vilken kolumn/kort muspekaren är över. Föredrar pekarträff, faller tillbaka på ytöverlapp.
+  // Avgör vilken kolumn eller vilket kort muspekaren befinner sig över medan man drar.
+  // Kollar i första hand exakt under pekaren, annars vad kortet överlappar mest.
   const collisionDetection: CollisionDetection = useCallback((args) => {
     const pointerCollisions = pointerWithin(args);
     if (pointerCollisions.length > 0) return pointerCollisions;
     return rectIntersection(args);
   }, []);
 
-  // Det kort som dras just nu (för att kunna visa "spökkortet").
+  // Själva ansökan för kortet som dras just nu (behövs för att rita kopian som följer muspekaren).
   const activeApp = activeId
     ? applications.find((a) => a.id === activeId) || null
     : null;
@@ -139,7 +141,7 @@ export function KanbanBoard({
 
   return (
     <>
-      {/* DndContext kopplar ihop hela dra-och-släpp-systemet. */}
+      {/* Det här ramverket runt tavlan är det som gör att korten går att dra och släppa. */}
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}
@@ -160,7 +162,7 @@ export function KanbanBoard({
             />
           ))}
         </div>
-        {/* "Spökkortet" som följer muspekaren medan man drar. */}
+        {/* Kopian av kortet som följer muspekaren medan man drar. */}
         <DragOverlay>
           {activeApp ? (
             <KanbanCard
@@ -172,7 +174,7 @@ export function KanbanBoard({
         </DragOverlay>
       </DndContext>
 
-      {/* Formuläret (modalen) visas bara när modalOpen är sant. */}
+      {/* Formulärfönstret visas bara när det är öppnat. */}
       {modalOpen && (
         <ApplicationModal
           application={editingApp}

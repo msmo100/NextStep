@@ -8,11 +8,11 @@ import {
   deleteApplicationRow,
 } from '../services/applicationsApi';
 
-// Egen hook som samlar all logik kring ansökningar: hämta, lägg till, ändra, ta bort,
-// flytta, filtrera och sortera. Synkar mot databasen via applicationsApi.
+// Samlar all hantering av ansökningar på ett ställe: hämta, lägg till, ändra, ta bort,
+// flytta, filtrera och sortera. Allt sparas i databasen via applicationsApi.
 export function useApplications() {
   const { user } = useAuth();
-  // applications = listan i minnet, loading = om vi just nu hämtar, filter = aktuellt filter.
+  // applications = listan vi har just nu, loading = om vi håller på att hämta, filter = vald filtrering.
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<FilterState>({
@@ -81,12 +81,12 @@ export function useApplications() {
       }
       const merged = { ...existing, ...updates, statusHistory };
 
-      // Uppdatera direkt i gränssnittet (optimistiskt), spara sedan i databasen.
+      // Visa ändringen direkt på skärmen så det känns snabbt, och spara sedan i databasen.
       setApplications((prev) => prev.map((a) => (a.id === id ? merged : a)));
       try {
         await updateApplicationRow(id, { ...updates, statusHistory });
       } catch (err) {
-        // Vid fel: ladda om från databasen så att vyn inte visar fel data.
+        // Gick sparandet fel: hämta om från databasen så att skärmen inte visar fel data.
         console.error('Kunde inte uppdatera ansökan:', err);
         reload();
       }
@@ -94,7 +94,7 @@ export function useApplications() {
     [applications, reload]
   );
 
-  // Tar bort en ansökan. Tas bort direkt i vyn och läggs tillbaka om databasen klagar.
+  // Tar bort en ansökan. Försvinner direkt från skärmen och läggs tillbaka om databasen klagar.
   const deleteApplication = useCallback(
     async (id: string) => {
       const prev = applications;
@@ -115,7 +115,7 @@ export function useApplications() {
     [updateApplication]
   );
 
-  // Returnerar listan filtrerad (status/företag/tagg) och sorterad enligt filter-tillståndet.
+  // Ger tillbaka listan filtrerad (på status/företag/tagg) och sorterad enligt vald filtrering.
   const getFilteredApplications = useCallback(() => {
     let filtered = [...applications];
 
@@ -154,7 +154,7 @@ export function useApplications() {
     [applications]
   );
 
-  // Allt som komponenterna får använda från hooken.
+  // Allt som resten av appen får använda härifrån.
   return {
     applications,
     loading,

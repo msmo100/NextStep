@@ -4,12 +4,12 @@ import { useAuth } from '../../contexts/AuthContext';
 import { isSupabaseConfigured } from '../../services/supabase';
 import './Login.css';
 
-// Sidan kan vara i två lägen: logga in eller skapa konto.
+// Sidan kan vara i två lägen: 'signin' = logga in, 'signup' = skapa konto.
 type Mode = 'signin' | 'signup';
 
 // Inloggnings-/registreringssidan.
 export function Login() {
-  // Formulärets tillstånd: läge, fält och meddelanden.
+  // Allt formuläret håller reda på: vilket läge vi är i, de ifyllda fälten och ev. meddelanden.
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');

@@ -5,7 +5,7 @@ import { Trash2, Edit3, Calendar, MapPin } from 'lucide-react';
 import type { JobApplication } from '../../types';
 import './Kanban.css';
 
-// Props för ett kort: ansökan att visa + callbacks för redigera/ta bort.
+// Det ett kort tar emot: ansökan som ska visas + funktioner för att redigera och ta bort den.
 interface KanbanCardProps {
   application: JobApplication;
   onEdit: (app: JobApplication) => void;
@@ -14,7 +14,7 @@ interface KanbanCardProps {
 
 // Ett enskilt ansökningskort i kanban-tavlan. Är dragbart.
 export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
-  // Kopplar in kortet i dra-och-släpp-systemet och ger oss positions-/dragdata.
+  // Gör kortet dragbart och ger oss info om var det är och om det dras just nu.
   const {
     attributes,
     listeners,
@@ -31,7 +31,7 @@ export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
     opacity: isDragging ? 0.5 : 1,
   };
 
-  // Hindrar att ett knapptryck startar ett drag (annars går knapparna inte att klicka).
+  // Ser till att ett tryck på en knapp inte startar ett drag (annars går knapparna inte att klicka).
   const stopDragPointer = (e: PointerEvent) => e.stopPropagation();
 
   return (
@@ -42,7 +42,7 @@ export function KanbanCard({ application, onEdit, onDelete }: KanbanCardProps) {
       {...attributes}
       {...listeners}
     >
-      {/* Åtgärdsknappar: redigera och ta bort. onPointerDown stoppar drag-start. */}
+      {/* Knappar: redigera och ta bort. (De stoppar dragstarten så att klicket går fram.) */}
       <div className="kanban-card-header">
         <div className="kanban-card-actions">
           <button

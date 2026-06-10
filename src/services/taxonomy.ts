@@ -4,7 +4,8 @@ export interface TaxonomyOption {
   label: string;
 }
 
-// Yrkesområden – id:n hämtade från Arbetsförmedlingens taxonomi.
+// Yrkesområden. Varje kod (id) är Arbetsförmedlingens egen kod för området –
+// den måste skickas med exakt så här för att deras API ska förstå filtret.
 export const OCCUPATION_FIELDS: TaxonomyOption[] = [
   { id: 'X82t_awd_Qyc', label: 'Administration, ekonomi, juridik' },
   { id: 'j7Cq_ZJe_GkT', label: 'Bygg och anläggning' },
@@ -66,7 +67,7 @@ export const REGIONS: TaxonomyOption[] = [
 // Alla alternativ samlade i en lista, för snabb uppslagning på id.
 const ALL_OPTIONS = [...OCCUPATION_FIELDS, ...EMPLOYMENT_TYPES, ...REGIONS];
 
-// Slår upp den svenska texten för ett id (används för att visa namnet på sparade sökningar).
+// Hittar den svenska texten som hör till en kod (för att visa läsbara namn på sparade sökningar).
 export function labelForId(id: string | undefined): string | undefined {
   if (!id) return undefined;
   return ALL_OPTIONS.find((o) => o.id === id)?.label;

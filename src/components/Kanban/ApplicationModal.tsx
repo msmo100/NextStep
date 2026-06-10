@@ -4,7 +4,8 @@ import type { JobApplication, ApplicationStatus } from '../../types';
 import { STATUS_LABELS, ALL_STATUSES } from '../../types';
 import './Kanban.css';
 
-// Props: ev. ansökan att redigera, förvald status, samt spara-/stäng-callbacks.
+// Det fönstret tar emot: ev. ansökan att redigera, vilken status som ska vara förvald,
+// samt funktioner som körs när man sparar respektive stänger.
 interface ApplicationModalProps {
   application?: JobApplication | null;
   defaultStatus?: ApplicationStatus;
@@ -14,7 +15,7 @@ interface ApplicationModalProps {
 
 // Modalfönstret med formuläret för att skapa eller redigera en ansökan.
 export function ApplicationModal({ application, defaultStatus = 'to-apply', onSave, onClose }: ApplicationModalProps) {
-  // Ett tillstånd per formulärfält. Datumet förifylls med dagens datum.
+  // En egen ruta att hålla värdet i för varje formulärfält. Datumet börjar på dagens datum.
   const [jobTitle, setJobTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
@@ -63,7 +64,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      {/* Själva rutan. stopPropagation hindrar att klick inuti stänger den. */}
+      {/* Själva rutan. Ett klick inuti den stängs inte vidare till bakgrunden, så fönstret blir kvar. */}
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{application ? 'Redigera ansökan' : 'Ny ansökan'}</h2>

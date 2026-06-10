@@ -19,7 +19,8 @@ import { loadWeeklyGoal, saveWeeklyGoal } from '../../services/storage';
 import { exportToCsv, exportToPdf, exportArbetsformedlingenReport } from '../../services/exportData';
 import './Statistics.css';
 
-// Registrerar de delar av Chart.js som behövs för cirkel-, stapel- och linjediagrammen.
+// Slår på de delar av diagram-biblioteket (Chart.js) som behövs för cirkel-, stapel- och linjediagram.
+// Det måste göras en gång innan diagrammen kan ritas.
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -32,12 +33,13 @@ ChartJS.register(
   Filler
 );
 
-// Props: alla ansökningar som statistiken ska räknas på.
+// Alla ansökningar som statistiken ska räknas på.
 interface StatisticsProps {
   applications: JobApplication[];
 }
 
-// Formaterar ett datum som YYYY-MM-DD i lokal tid (undviker tidszonsfel som toISOString kan ge).
+// Skriver ut ett datum som ÅÅÅÅ-MM-DD utifrån svensk lokal tid.
+// (Görs manuellt för att undvika att datumet råkar hoppa en dag pga tidszon.)
 function toLocalDateString(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -51,7 +53,7 @@ export function Statistics({ applications }: StatisticsProps) {
   const [weeklyGoal, setWeeklyGoal] = useState(10);
   const [editingGoal, setEditingGoal] = useState(false);
 
-  // Datumintervall för aktivitetsrapporten – från månadens första dag till idag som standard.
+  // Datumintervall för aktivitetsrapporten – som standard från den 1:a denna månad till idag.
   const [afFromDate, setAfFromDate] = useState(() => {
     const d = new Date();
     d.setDate(1);
@@ -89,14 +91,14 @@ export function Statistics({ applications }: StatisticsProps) {
   const timelineData = useMemo(() => {
     const byWeek: Record<string, number> = {};
     applications.forEach((app) => {
-      // Avrunda varje datum till veckans måndag och räkna per sådan veckostart.
+      // Flytta varje datum bakåt till måndagen samma vecka och räkna per sådan veckostart.
       const date = new Date(app.applicationDate);
       const weekStart = new Date(date);
       weekStart.setDate(date.getDate() - date.getDay() + 1);
       const key = weekStart.toISOString().split('T')[0];
       byWeek[key] = (byWeek[key] || 0) + 1;
     });
-    // Sortera kronologiskt och dela upp i etiketter (datum) och värden (antal).
+    // Sortera i tidsordning och dela upp i texter under diagrammet (datum) och staplarnas höjd (antal).
     const sorted = Object.entries(byWeek).sort((a, b) => a[0].localeCompare(b[0]));
     return {
       labels: sorted.map(([date]) => new Date(date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })),
@@ -177,7 +179,7 @@ export function Statistics({ applications }: StatisticsProps) {
     return thisWeek.length;
   }, [applications]);
 
-  // Sparar ett nytt veckomål (klämt till 1–100) och stänger redigeringsläget.
+  // Sparar ett nytt veckomål (begränsat till mellan 1 och 100) och stänger redigeringsläget.
   const handleGoalChange = (newGoal: number) => {
     const clamped = Math.max(1, Math.min(100, newGoal));
     setWeeklyGoal(clamped);
@@ -239,7 +241,7 @@ export function Statistics({ applications }: StatisticsProps) {
     },
   };
 
-  // Utan ansökningar finns inget att visa – visa ett tomtillstånd i stället.
+  // Finns inga ansökningar finns ingen statistik – visa en uppmaning att lägga till några i stället.
   if (applications.length === 0) {
     return (
       <div className="stats-empty">

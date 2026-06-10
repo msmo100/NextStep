@@ -1,16 +1,26 @@
-import { useMemo, type ReactNode } from 'react';
+import { useMemo, lazy, Suspense, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout } from './components/Layout/Layout';
-import { KanbanBoard } from './components/Kanban/KanbanBoard';
-import { JobSearch } from './components/JobSearch/JobSearch';
-import { Statistics } from './components/Statistics/Statistics';
 import { Login } from './components/Auth/Login';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useApplications } from './hooks/useApplications';
 import './App.css';
 
-// Skyddar sidor som kräver inloggning: visar laddning, skickar utloggade till /login,
-// och annars sidans innehåll.
+// De här tre sidorna är "tunga" och laddas först när de faktiskt behövs, i stället för
+// direkt vid start. Då går appen snabbare att öppna. Statistiksidan drar t.ex. in ett stort
+// diagram-bibliotek, och det hade gjort starten långsam om det laddades varje gång.
+const KanbanBoard = lazy(() =>
+  import('./components/Kanban/KanbanBoard').then((m) => ({ default: m.KanbanBoard }))
+);
+const JobSearch = lazy(() =>
+  import('./components/JobSearch/JobSearch').then((m) => ({ default: m.JobSearch }))
+);
+const Statistics = lazy(() =>
+  import('./components/Statistics/Statistics').then((m) => ({ default: m.Statistics }))
+);
+
+// Vakt runt sidor som kräver inloggning: visar "Laddar…" medan vi kollar,
+// skickar den som inte är inloggad till inloggningssidan, och släpper annars in den.
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   if (loading) return <div className="app-loading">Laddar…</div>;
@@ -26,9 +36,9 @@ function LoginRoute() {
   return <Login />;
 }
 
-// Själva appinnehållet: hämtar ansökningsdatan och definierar alla sidor (routes).
+// Själva appinnehållet: hämtar ansökningarna och bestämmer vilken adress som visar vilken sida.
 function AppContent() {
-  // Hämtar ansökningarna och alla funktioner för att ändra dem från en gemensam hook.
+  // Hämtar listan med ansökningar och alla funktioner för att ändra dem från ett gemensamt ställe.
   const {
     applications,
     addApplication,
@@ -38,16 +48,18 @@ function AppContent() {
     getApplicationsByStatus,
   } = useApplications();
 
-  // Bygger en mängd av redan sparade annons-id:n så jobbsöket kan visa "Sparad".
-  // useMemo räknar bara om detta när listan med ansökningar ändras.
+  // Samlar id:n för annonser som redan är sparade, så jobbsöket kan visa "Sparad" på dem.
+  // Listan räknas bara om när ansökningarna ändras, inte i onödan vid varje omritning.
   const savedJobIds = useMemo(
     () => new Set(applications.filter((a) => a.sourceId).map((a) => a.sourceId!)),
     [applications]
   );
 
   return (
-    <Routes>
-      <Route path="login" element={<LoginRoute />} />
+    // Visar en laddningstext medan en av de tunga sidorna hämtas i bakgrunden.
+    <Suspense fallback={<div className="app-loading">Laddar…</div>}>
+      <Routes>
+        <Route path="login" element={<LoginRoute />} />
       <Route
         element={
           <ProtectedRoute>
@@ -55,7 +67,7 @@ function AppContent() {
           </ProtectedRoute>
         }
       >
-        {/* Startsidan (/) = Kanban-tavlan. Datan och funktionerna skickas ner som props. */}
+        {/* Startsidan (/) = Kanban-tavlan. Den får datan och funktionerna skickade till sig. */}
         <Route
           index
           element={
@@ -81,12 +93,13 @@ function AppContent() {
           path="statistics"
           element={<Statistics applications={applications} />}
         />
-      </Route>
-    </Routes>
+        </Route>
+      </Routes>
+    </Suspense>
   );
 }
 
-// Rot-komponenten: slår in allt i routern (URL-hantering) och inloggningskontexten.
+// Yttersta komponenten: slår in hela appen i adresshanteringen och inloggningsinfon.
 function App() {
   return (
     <BrowserRouter>
