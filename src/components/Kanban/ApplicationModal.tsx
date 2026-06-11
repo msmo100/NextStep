@@ -82,7 +82,6 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
               value={jobTitle}
               onChange={(e) => setJobTitle(e.target.value)}
               required
-              placeholder="t.ex. Frontend-utvecklare"
             />
           </div>
           {/* Obligatoriskt: företag. */}
