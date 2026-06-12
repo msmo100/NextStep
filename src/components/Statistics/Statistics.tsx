@@ -19,8 +19,7 @@ import { loadWeeklyGoal, saveWeeklyGoal } from '../../services/storage';
 import { exportToCsv, exportToPdf, exportArbetsformedlingenReport } from '../../services/exportData';
 import './Statistics.css';
 
-// Slår på de delar av diagram-biblioteket (Chart.js) som behövs för cirkel-, stapel- och linjediagram.
-// Det måste göras en gång innan diagrammen kan ritas.
+// Slår på de delar av Chart.js som behövs (cirkel, stapel, linje). Görs en gång innan diagram kan ritas.
 ChartJS.register(
   ArcElement,
   Tooltip,
@@ -38,8 +37,7 @@ interface StatisticsProps {
   applications: JobApplication[];
 }
 
-// Skriver ut ett datum som ÅÅÅÅ-MM-DD utifrån svensk lokal tid.
-// (Görs manuellt för att undvika att datumet råkar hoppa en dag pga tidszon.)
+// Skriver datum som ÅÅÅÅ-MM-DD i svensk tid. (Manuellt, så datumet inte hoppar en dag pga tidszon.)
 function toLocalDateString(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -98,7 +96,7 @@ export function Statistics({ applications }: StatisticsProps) {
       const key = weekStart.toISOString().split('T')[0];
       byWeek[key] = (byWeek[key] || 0) + 1;
     });
-    // Sortera i tidsordning och dela upp i texter under diagrammet (datum) och staplarnas höjd (antal).
+    // Sortera i tidsordning och dela upp i datum (etiketter) och antal (värden).
     const sorted = Object.entries(byWeek).sort((a, b) => a[0].localeCompare(b[0]));
     return {
       labels: sorted.map(([date]) => new Date(date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })),
@@ -118,7 +116,7 @@ export function Statistics({ applications }: StatisticsProps) {
     return Math.round((progressed.length / applied.length) * 100);
   }, [applications]);
 
-  // Genomsnittlig tid (i dagar) som ansökningar tillbringar i varje steg, ur statushistoriken.
+  // Snittid (i dagar) som ansökningar ligger i varje steg, ur statushistoriken.
   const avgTimePerStage = useMemo(() => {
     // Samla in alla uppmätta varaktigheter per status.
     const durations: Record<ApplicationStatus, number[]> = {
@@ -241,7 +239,7 @@ export function Statistics({ applications }: StatisticsProps) {
     },
   };
 
-  // Finns inga ansökningar finns ingen statistik – visa en uppmaning att lägga till några i stället.
+  // Inga ansökningar = ingen statistik. Visa en uppmaning i stället.
   if (applications.length === 0) {
     return (
       <div className="stats-empty">

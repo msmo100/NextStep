@@ -4,8 +4,7 @@ export interface TaxonomyOption {
   label: string;
 }
 
-// Yrkesområden. Varje kod (id) är Arbetsförmedlingens egen kod för området –
-// den måste skickas med exakt så här för att deras API ska förstå filtret.
+// Yrkesområden. Varje id är Arbetsförmedlingens egen kod – måste skickas exakt så här.
 export const OCCUPATION_FIELDS: TaxonomyOption[] = [
   { id: 'X82t_awd_Qyc', label: 'Administration, ekonomi, juridik' },
   { id: 'j7Cq_ZJe_GkT', label: 'Bygg och anläggning' },

@@ -1,9 +1,9 @@
 import type { JobApplication } from '../types';
 import { STATUS_LABELS } from '../types';
 
-// Exporterar alla ansökningar till en CSV-fil och laddar ner den.
+// Exporterar alla ansökningar till en CSV-fil och laddar ner den
 export function exportToCsv(applications: JobApplication[]): void {
-  // Kolumnrubriker överst i filen.
+  // Kolumnrubriker överst i filen
   const headers = [
     'Jobbtitel',
     'Företag',
@@ -16,7 +16,7 @@ export function exportToCsv(applications: JobApplication[]): void {
     'Skapad',
   ];
 
-  // En rad per ansökan i samma ordning som rubrikerna.
+  // En rad per ansökan i samma ordning som rubrikerna
   const rows = applications.map((app) => [
     app.jobTitle,
     app.company,
@@ -29,21 +29,20 @@ export function exportToCsv(applications: JobApplication[]): void {
     new Date(app.createdAt).toLocaleDateString('sv-SE'),
   ]);
 
-  // Slå ihop rubrik + rader till CSV-text. Varje cell citeras och inre citattecken dubblas.
+  // Slå ihop rubrik + rader till CSV-text. Varje cell får citattecken
   const csvContent = [headers, ...rows]
     .map((row) => row.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(','))
     .join('\n');
 
-  // Ett osynligt tecken först i filen säger åt Excel att läsa den som svensk text,
-  // annars riskerar å, ä och ö att visas som konstiga tecken.
+  // Ett osynligt tecken först i filen, så Excel läser den som svensk text
   const bom = String.fromCharCode(0xfeff);
   const blob = new Blob([bom + csvContent], { type: 'text/csv;charset=utf-8;' });
   downloadBlob(blob, `nextstep-ansokan-${new Date().toISOString().split('T')[0]}.csv`);
 }
 
-// Exporterar ansökningarna till PDF genom att öppna en utskriftsvänlig sida.
+// Exporterar ansökningarna till PDF genom att öppna en sida
 export function exportToPdf(applications: JobApplication[]): void {
-  // Gruppera ansökningarna per status så varje status får en egen tabell.
+  // Gruppa ansökningarna på status så varje status får en egen tabell.
   const statusGroups = new Map<string, JobApplication[]>();
   for (const app of applications) {
     const label = STATUS_LABELS[app.status];
@@ -51,7 +50,7 @@ export function exportToPdf(applications: JobApplication[]): void {
     statusGroups.get(label)!.push(app);
   }
 
-  // Bygg HTML-dokumentet som ska skrivas ut (stil + en tabell per statusgrupp).
+  // Bygg HTML-dokumentet som ska skrivas ut
   const html = `
 <!DOCTYPE html>
 <html lang="sv">
@@ -98,7 +97,7 @@ export function exportToPdf(applications: JobApplication[]): void {
 </body>
 </html>`;
 
-  // Öppna HTML:en i en ny flik och starta utskriftsdialogen när sidan laddats.
+  // Öppna HTML:en i en ny flik och starta utskriftsdialogen
   const blob = new Blob([html], { type: 'text/html;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const win = window.open(url, '_blank');
@@ -110,22 +109,22 @@ export function exportToPdf(applications: JobApplication[]): void {
   }
 }
 
-// Skapar en aktivitetsrapport för Arbetsförmedlingen över sökta jobb i ett datumintervall.
+// Skapar en aktivitetsrapport för Arbetsförmedlingen över sökta jobb inom visst datum
 export function exportArbetsformedlingenReport(
   applications: JobApplication[],
   fromDate: string,
   toDate: string
 ): void {
-  // Ta bara med faktiskt sökta jobb (inte "att söka") inom det valda intervallet, sorterade på datum.
+  // Ta bara med faktiskt sökta jobb inom det valda intervallet, sorterade på datum.
   const filtered = applications
     .filter((app) => app.status !== 'to-apply')
     .filter((app) => app.applicationDate >= fromDate && app.applicationDate <= toDate)
     .sort((a, b) => a.applicationDate.localeCompare(b.applicationDate));
 
-  // Liten hjälpare för att formatera datum på svenska.
+  // Liten hjälpare för att formatera datum på svenska
   const fmt = (d: string) => new Date(d).toLocaleDateString('sv-SE');
 
-  // Bygg tabellen – eller ett meddelande om perioden saknar ansökningar.
+  // Bygg tabellen eller ett meddelande om perioden saknar ansökningar
   const tableHtml = filtered.length === 0
     ? `<p class="empty">Inga ansökningar i den valda perioden.</p>`
     : `<table>
@@ -149,7 +148,7 @@ export function exportArbetsformedlingenReport(
       </tbody>
     </table>`;
 
-  // Hela rapportens HTML (rubrik, period och tabellen ovan).
+  // Hela rapportens HTML 
   const html = `<!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -189,8 +188,7 @@ export function exportArbetsformedlingenReport(
   }
 }
 
-// Gör specialtecken (< > & ") ofarliga så att t.ex. ett företagsnamn med < i sig
-// visas som text i rapporten i stället för att råka tolkas som HTML-kod.
+// Gör specialtecken (< > & ") ofarliga
 function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')
@@ -199,7 +197,7 @@ function escapeHtml(str: string): string {
     .replace(/"/g, '&quot;');
 }
 
-// Startar en filnedladdning genom att i smyg skapa en länk, "klicka" på den och ta bort den igen.
+// Startar en filnedladdning genom att i smyg skapa en länk, "klicka" på den och ta bort den igen
 function downloadBlob(blob: Blob, filename: string): void {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');

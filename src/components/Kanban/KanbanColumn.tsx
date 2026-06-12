@@ -6,8 +6,7 @@ import { STATUS_LABELS, STATUS_COLORS } from '../../types';
 import { KanbanCard } from './KanbanCard';
 import './Kanban.css';
 
-// Det en kolumn tar emot: vilken status den är, korten i den och funktioner
-// som körs när man redigerar, tar bort eller lägger till en ansökan.
+// Det en kolumn tar emot: dess status, korten i den, och funktioner för redigera/ta bort/lägg till.
 interface KanbanColumnProps {
   status: ApplicationStatus;
   applications: JobApplication[];
@@ -40,7 +39,7 @@ export function KanbanColumn({ status, applications, onEdit, onDelete, onAdd }: 
           <Plus size={16} />
         </button>
       </div>
-      {/* Listan med kort. Inpackningen runt dem är det som gör korten dragbara inom kolumnen. */}
+      {/* Listan med kort. Inpackningen runt gör dem dragbara inom kolumnen. */}
       <div className="kanban-column-body">
         <SortableContext items={applications.map((a) => a.id)} strategy={verticalListSortingStrategy}>
           {applications.map((app) => (

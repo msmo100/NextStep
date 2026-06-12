@@ -1,8 +1,7 @@
 // Nyckeln som veckomålet lagras under i webbläsarens localStorage.
 const WEEKLY_GOAL_KEY = 'nextstep-weekly-goal';
 
-// Läser veckomålet från localStorage. Returnerar 10 som standard om inget sparats
-// eller om värdet är trasigt.
+// Läser veckomålet. Returnerar 10 om inget sparats eller värdet är trasigt.
 export function loadWeeklyGoal(): number {
   try {
     const data = localStorage.getItem(WEEKLY_GOAL_KEY);

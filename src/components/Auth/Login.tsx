@@ -9,7 +9,7 @@ type Mode = 'signin' | 'signup';
 
 // Inloggnings-/registreringssidan.
 export function Login() {
-  // Allt formuläret håller reda på: vilket läge vi är i, de ifyllda fälten och ev. meddelanden.
+  // Allt formuläret håller reda på: läge, ifyllda fält och ev. meddelanden.
   const [mode, setMode] = useState<Mode>('signin');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -49,7 +49,7 @@ export function Login() {
       }
       navigate('/');
     } else {
-      // Registrering: vid lyckad registrering be användaren bekräfta e-post och byt till inloggning.
+      // Registrering: be användaren bekräfta e-post, byt sedan till inloggning.
       const { error } = await signUp(email, password, name);
       setSubmitting(false);
       if (error) {

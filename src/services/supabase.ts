@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 const url = import.meta.env.VITE_SUPABASE_URL;
 const anonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Sant bara om båda miljövariablerna är satta – används för att visa hjälpsamma fel.
+// Sant bara om båda värdena finns – för att kunna visa hjälpsamma fel.
 export const isSupabaseConfigured = Boolean(url && anonKey);
 
 // Varna i konsolen om uppsättningen saknas, så att felet blir lätt att förstå.
@@ -15,8 +15,7 @@ if (!isSupabaseConfigured) {
   );
 }
 
-// Den delade Supabase-klienten som resten av appen använder.
-// Faller tillbaka på platshållarvärden om konfigurationen saknas (så appen inte kraschar).
+// Den delade Supabase-klienten. Använder platshållarvärden om inget är satt, så appen inte kraschar.
 export const supabase = createClient(
   url ?? 'https://placeholder.supabase.co',
   anonKey ?? 'placeholder-anon-key'

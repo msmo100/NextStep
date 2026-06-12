@@ -21,8 +21,7 @@ import { KanbanCard } from './KanbanCard';
 import { ApplicationModal } from './ApplicationModal';
 import './Kanban.css';
 
-// Det tavlan tar emot: listan med ansökningar och funktioner som körs när man
-// lägger till, ändrar, tar bort respektive flyttar en ansökan.
+// Det tavlan tar emot: ansökningarna och funktioner för lägg till/ändra/ta bort/flytta.
 interface KanbanBoardProps {
   applications: JobApplication[];
   getByStatus: (status: ApplicationStatus) => JobApplication[];
@@ -41,26 +40,25 @@ export function KanbanBoard({
   onDelete,
   onMove,
 }: KanbanBoardProps) {
-  // activeId = vilket kort som dras just nu. De övriga styr formulärfönstret (öppet/redigeras/förvald kolumn).
+  // activeId = kortet som dras nu. De övriga styr formulärfönstret.
   const [activeId, setActiveId] = useState<string | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<JobApplication | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<ApplicationStatus>('to-apply');
 
-  // Kräver att muspekaren flyttas 5px innan drag startar – så vanliga klick inte tolkas som drag.
+  // Muspekaren måste flyttas 5px innan drag startar – så klick inte tolkas som drag.
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
 
-  // Avgör vilken kolumn eller vilket kort muspekaren befinner sig över medan man drar.
-  // Kollar i första hand exakt under pekaren, annars vad kortet överlappar mest.
+  // Avgör vilken kolumn/kort pekaren är över när man drar (exakt under pekaren, annars mest överlapp).
   const collisionDetection: CollisionDetection = useCallback((args) => {
     const pointerCollisions = pointerWithin(args);
     if (pointerCollisions.length > 0) return pointerCollisions;
     return rectIntersection(args);
   }, []);
 
-  // Själva ansökan för kortet som dras just nu (behövs för att rita kopian som följer muspekaren).
+  // Ansökan för kortet som dras nu (för att rita kopian som följer muspekaren).
   const activeApp = activeId
     ? applications.find((a) => a.id === activeId) || null
     : null;
@@ -70,7 +68,7 @@ export function KanbanBoard({
     setActiveId(event.active.id as string);
   }, []);
 
-  // Medan kortet dras över något: flytta det till den kolumn/det korts status man hovrar över.
+  // Medan kortet dras: flytta det till statusen man hovrar över (kolumn eller annat kort).
   const handleDragOver = useCallback(
     (event: DragOverEvent) => {
       const { active, over } = event;
@@ -98,7 +96,7 @@ export function KanbanBoard({
     [applications, onMove]
   );
 
-  // När draget släpps: nollställ det aktiva kortet (flytten har redan skett i handleDragOver).
+  // När draget släpps: nollställ aktiva kortet (flytten skedde redan under dragandet).
   const handleDragEnd = useCallback((_event: DragEndEvent) => {
     setActiveId(null);
   }, []);
@@ -141,7 +139,7 @@ export function KanbanBoard({
 
   return (
     <>
-      {/* Det här ramverket runt tavlan är det som gör att korten går att dra och släppa. */}
+      {/* Ramverket runt tavlan – det är det som gör korten dra-och-släppbara. */}
       <DndContext
         sensors={sensors}
         collisionDetection={collisionDetection}

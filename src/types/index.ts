@@ -1,4 +1,4 @@
-// De fem möjliga lägena en ansökan kan befinna sig i (motsvarar kanban-kolumnerna).
+// De fem lägen en ansökan kan ha (= kanban-kolumnerna).
 export type ApplicationStatus =
   | 'to-apply'
   | 'applied'
@@ -6,7 +6,7 @@ export type ApplicationStatus =
   | 'rejected'
   | 'offer';
 
-// Svenska visningsnamn för varje status (används i gränssnittet).
+// Svenska namn för varje status (visas i appen).
 export const STATUS_LABELS: Record<ApplicationStatus, string> = {
   'to-apply': 'Att söka',
   applied: 'Ansökt',
@@ -24,7 +24,7 @@ export const STATUS_COLORS: Record<ApplicationStatus, string> = {
   offer: '#22c55e',
 };
 
-// Statusarna i visningsordning – används för att loopa över alla kolumner.
+// Statusarna i rätt ordning – för att gå igenom alla kolumner.
 export const ALL_STATUSES: ApplicationStatus[] = [
   'to-apply',
   'applied',
@@ -33,8 +33,7 @@ export const ALL_STATUSES: ApplicationStatus[] = [
   'offer',
 ];
 
-// Ett enskilt statusbyte (från ett läge till ett annat, med tidpunkt).
-// Sparas i historiken så att vi kan räkna ut hur länge en ansökan låg i varje steg.
+// Ett statusbyte (från → till, med tidpunkt). Sparas i historiken för att mäta tid per steg.
 export interface StatusChange {
   from: ApplicationStatus;
   to: ApplicationStatus;
@@ -58,7 +57,7 @@ export interface JobApplication {
   updatedAt: string;
 }
 
-// En träff från Arbetsförmedlingens jobbsöks-API, precis i den form API:et skickar den.
+// En jobbträff från Arbetsförmedlingens API, i den form API:et skickar den.
 export interface JobSearchResult {
   id: string;
   headline: string;
@@ -119,7 +118,7 @@ export interface SavedSearch {
 export type SortOption = 'date' | 'title' | 'company';
 export type SortDirection = 'asc' | 'desc';
 
-// Det aktuella filter-/sorteringstillståndet för listan.
+// Hur listan just nu är filtrerad och sorterad.
 export interface FilterState {
   status: ApplicationStatus | 'all';
   company: string;

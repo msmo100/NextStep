@@ -3,8 +3,7 @@ import type { JobSearchResponse, JobSearchFilters } from '../types';
 // Adressen till Arbetsförmedlingens öppna jobbsöks-API (JobTech).
 const BASE_URL = 'https://jobsearch.api.jobtechdev.se';
 
-// Söker jobb mot API:et. offset = var i träfflistan vi börjar, limit = hur många vi vill ha
-// (det är så vi delar upp träffarna i sidor: sida 2 börjar t.ex. vid offset 20).
+// Söker jobb mot API:et. offset = var i listan vi börjar, limit = hur många (så vi får sidor).
 export async function searchJobs(
   query: string,
   filters: JobSearchFilters = {},
@@ -12,7 +11,7 @@ export async function searchJobs(
   limit = 20
 ): Promise<JobSearchResponse> {
 
-  // Grundinställningar: var i listan vi börjar, hur många träffar, nyast annons först.
+  // Grundinställningar: startposition, antal träffar, nyast först.
   const params = new URLSearchParams({
     offset: String(offset),
     limit: String(limit),
@@ -31,7 +30,7 @@ export async function searchJobs(
     headers: { accept: 'application/json' },
   });
 
-  // Kasta ett fel om servern svarade med en felkod (t.ex. 500).
+  // Fel om servern svarade med en felkod (t.ex. 500).
   if (!response.ok) {
     throw new Error(`API-fel: ${response.status}`);
   }

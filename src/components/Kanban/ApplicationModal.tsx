@@ -4,8 +4,7 @@ import type { JobApplication, ApplicationStatus } from '../../types';
 import { STATUS_LABELS, ALL_STATUSES } from '../../types';
 import './Kanban.css';
 
-// Det fönstret tar emot: ev. ansökan att redigera, vilken status som ska vara förvald,
-// samt funktioner som körs när man sparar respektive stänger.
+// Det fönstret tar emot: ev. ansökan att redigera, förvald status, och spara-/stäng-funktioner.
 interface ApplicationModalProps {
   application?: JobApplication | null;
   defaultStatus?: ApplicationStatus;
@@ -15,7 +14,7 @@ interface ApplicationModalProps {
 
 // Modalfönstret med formuläret för att skapa eller redigera en ansökan.
 export function ApplicationModal({ application, defaultStatus = 'to-apply', onSave, onClose }: ApplicationModalProps) {
-  // En egen ruta att hålla värdet i för varje formulärfält. Datumet börjar på dagens datum.
+  // En ruta att hålla värdet i för varje fält. Datumet börjar på idag.
   const [jobTitle, setJobTitle] = useState('');
   const [company, setCompany] = useState('');
   const [location, setLocation] = useState('');
@@ -39,7 +38,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
     }
   }, [application]);
 
-  // Skickar formuläret: bygger ihop ansökningsobjektet och stänger sedan modalen.
+  // Skickar formuläret: bygger ihop ansökan och stänger fönstret.
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSave({
@@ -64,7 +63,7 @@ export function ApplicationModal({ application, defaultStatus = 'to-apply', onSa
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      {/* Själva rutan. Ett klick inuti den stängs inte vidare till bakgrunden, så fönstret blir kvar. */}
+      {/* Själva rutan. Klick inuti stänger inte fönstret (sprids inte till bakgrunden). */}
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{application ? 'Redigera ansökan' : 'Ny ansökan'}</h2>

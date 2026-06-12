@@ -33,8 +33,7 @@ import type {
 } from '../../types';
 import './JobSearch.css';
 
-// Det sidan tar emot: en funktion som sparar en annons som ansökan, och en lista
-// med id:n på annonser som redan är sparade (så vi kan visa "Sparad" på dem).
+// Det sidan tar emot: en funktion som sparar en annons som ansökan, + id:n på redan sparade annonser.
 interface JobSearchProps {
   onSaveJob: (app: Omit<JobApplication, 'id' | 'createdAt' | 'updatedAt'>) => void;
   savedJobIds: Set<string>;
@@ -64,8 +63,7 @@ function describeSearch(query: string, filters: JobSearchFilters): string {
 
 // Sidan för att söka jobb mot API:et, spara sökningar och spara annonser som ansökningar.
 export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
-  // Allt sökningen håller reda på: sökord, valda filter, träffarna, totalt antal,
-  // var i listan vi är, om vi laddar, ev. felmeddelande och vilket kort som är utfällt.
+  // Allt sökningen håller reda på: sökord, filter, träffar, antal, sida, laddning, fel och utfällt kort.
   const [query, setQuery] = useState('');
   const [filters, setFilters] = useState<JobSearchFilters>(EMPTY_FILTERS);
   const [results, setResults] = useState<JobSearchResult[]>([]);
@@ -76,8 +74,7 @@ export function JobSearch({ onSaveJob, savedJobIds }: JobSearchProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
 
-  // Det som hör till sparade sökningar: den inloggade användaren, listan med sparade
-  // sökningar och namnet man håller på att skriva när en sökning ska sparas.
+  // Det som hör till sparade sökningar: användaren, listan, och namnet man håller på att skriva.
   const { user } = useAuth();
   const [savedSearches, setSavedSearches] = useState<SavedSearch[]>([]);
   const [savingName, setSavingName] = useState<string | null>(null);
